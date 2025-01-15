@@ -8,7 +8,6 @@ public class ChessBoardGenerator : MonoBehaviour
 
     [Header("Tile Settings")]
     public GameObject tilePrefab;
-    public float tileSize = 1f;
     public Color lightColor = Color.white;
     public Color darkColor = Color.gray;
 
@@ -47,7 +46,7 @@ public class ChessBoardGenerator : MonoBehaviour
         {
             for (int x = 0; x < columns; x++)
             {
-                Vector2 spawnPos = new Vector2(x * tileSize, y * tileSize);
+                Vector3 spawnPos = new Vector3(x, y,1 );
                 GameObject tileGO = Instantiate(tilePrefab, spawnPos, Quaternion.identity, transform);
                 tileGO.name = $"Tile ({x},{y})";
 
@@ -105,7 +104,7 @@ public class ChessBoardGenerator : MonoBehaviour
             return;
         }
 
-        Vector2 pos = new Vector2(x * tileSize, y * tileSize);
+        Vector2 pos = new Vector2(x, y);
         GameObject pieceGO = Instantiate(prefab, pos, Quaternion.identity, transform);
 
         

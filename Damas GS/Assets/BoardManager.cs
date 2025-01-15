@@ -46,7 +46,7 @@ public class BoardManager : MonoBehaviour
        
         if (piece.color != currentPlayer)
         {
-            // It's the opponent's piece → ignore or display error
+            
             return;
         }
 
@@ -76,7 +76,7 @@ public class BoardManager : MonoBehaviour
         if (validMoves.Contains(clickedPos))
         {
             MovePiece(selectedPiece, tile.boardX, tile.boardY);
-
+           
            
             SwitchTurn(); 
         }
