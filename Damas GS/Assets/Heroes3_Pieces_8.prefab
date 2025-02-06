@@ -100,6 +100,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   type: 3
   color: 1
+  MaxHealth: 0
+  currentHealth: 0
+  atkPower: 0
   boardX: 0
   boardY: 0
 --- !u!61 &-8107785197567267465

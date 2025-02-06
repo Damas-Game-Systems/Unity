@@ -1,24 +1,27 @@
 using UnityEngine;
+using UnityEngine.EventSystems; // <-- Add this namespace
 
 public enum PieceType { Pawn, Rook, Knight, Bishop, Queen, King }
 public enum PieceColor { White, Black }
 
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(Collider2D))]
-public class Piece : MonoBehaviour
+public class Piece : MonoBehaviour, IPointerDownHandler
 {
     public PieceType type;
     public PieceColor color;
+    public int MaxHealth;
+    public int currentHealth;
+    public int atkPower;
 
     // Current position on the board
     public int boardX;
     public int boardY;
 
-    private void OnMouseDown()
+    // This replaces OnMouseDown()
+    public void OnPointerDown(PointerEventData eventData)
     {
-        // Forward the click event to the BoardManager
-        // so it can select / handle this piece.
-        Debug.Log("Clicked on " + name + " with color=" + color + " at boardX=" + boardX + ", boardY=" + boardY);
+        Debug.Log($"Clicked on {name} (color = {color}) at boardX={boardX}, boardY={boardY}");
         BoardManager.Instance.OnPieceClicked(this);
     }
 }
