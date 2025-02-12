@@ -158,17 +158,39 @@ public class BoardManager : MonoBehaviour
         }
     }
 
+    public bool TryGetOccupant(Tile tile, out Piece occupant)
+    {
+        Vector2Int tilePos = tile.GetPositionData();
+
+        if (!tilesD.TryGetValue(tilePos, out Tile foundTile))
+        {
+            occupant = null;
+            return false;
+        }
+
+        if (tile != foundTile)
+        {
+            Debug.LogError("Tile map is fucked");
+            occupant = null;
+            return false;
+        }
+
+        return piecesD.TryGetValue(tilePos, out occupant);
+    }
+
     private void SelectPiece(Piece piece)
     {
         selectedPiece = piece;
         validMoves = GetValidMoves(piece);
 
-        TurnOnHighlights();
+        //TurnOnHighlights();
+        SetOverlaysOnValidMoves(true);
     }
     
     private void DeselectPiece()
     {
-        TurnOffHighlights();
+        SetOverlaysOnValidMoves(false);
+        //TurnOffHighlights();
         selectedPiece = null;
         validMoves.Clear();
     }
@@ -421,6 +443,30 @@ public class BoardManager : MonoBehaviour
             {
                 t.SetHighlight(false);
             }
+        }
+    }
+
+    private void SetOverlaysOnValidMoves(bool turnOn)
+    {
+        foreach(Vector2Int pos in validMoves)
+        {
+
+            if (!tilesD.TryGetValue(pos, out Tile t))
+            {
+                continue;
+            }
+
+            if (!turnOn)
+            {
+                t.ClearOverlay();
+                continue;
+            }
+
+            if (piecesD.ContainsKey(pos))
+            {
+                t.SetOverlay(piecesD[pos] != null);
+            }
+
         }
     }
 

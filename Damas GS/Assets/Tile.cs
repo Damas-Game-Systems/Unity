@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems; // <-- Add this namespace
 
@@ -9,6 +10,11 @@ public class Tile : MonoBehaviour, IPointerDownHandler
     public Color darkColor = Color.gray;
     public Color defaultColor = Color.white;
     public Color highlightColor = Color.green;  // highlight
+
+    [SerializeField] private GameObject emptyTileOverlayPrefab;
+    [SerializeField] private GameObject occupiedTileOverlayPrefab;
+
+    private GameObject overlay;
 
     private SpriteRenderer rend;
 
@@ -50,4 +56,28 @@ public class Tile : MonoBehaviour, IPointerDownHandler
     {
         BoardManager.Instance.OnTileClicked(this);
     }
+
+    public void SetOverlay(bool hasPiece)
+    {
+        ClearOverlay();
+
+        if (hasPiece)
+        {
+            overlay = Instantiate(occupiedTileOverlayPrefab, transform);
+        }
+        else
+        {
+            overlay = Instantiate(emptyTileOverlayPrefab, transform);
+        }
+    }
+
+    public void ClearOverlay()
+    {
+        if (overlay != null)
+        {
+            Destroy(overlay);
+        }
+        overlay = null;
+    }
+
 }
