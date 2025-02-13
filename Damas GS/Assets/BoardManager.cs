@@ -1,17 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using static UnityEngine.GraphicsBuffer;
+using Damas.Utils;
+using UnityEngine.UIElements;
 
 public class BoardManager : MonoBehaviour
 {
-    
-    public static BoardManager Instance { get; private set; }
+    [SerializeField] dbug log;
 
+    public static BoardManager Instance { get; private set; }
    
     //Keep track of whose turn it is 
-   [SerializeField] private PieceColor currentPlayer = PieceColor.White;
+    [SerializeField] private PieceColor currentPlayerColor = PieceColor.White;
 
-    
-    private Piece[,] board = new Piece[8, 8];
+    [SerializeField] private int width;
+    [SerializeField] private int height;
+
+    private Dictionary<Vector2Int, Piece> pieces = new();
+    private Dictionary<Vector2Int, Tile> tiles = new();
 
     // Currently selected piece
     [SerializeField]private Piece selectedPiece = null;
@@ -29,124 +35,186 @@ public class BoardManager : MonoBehaviour
         Instance = this;
     }
 
-    
-    
-    
-    public void RegisterPiece(Piece piece, int x, int y)
+    /// <summary>
+    /// I think some of this is backward re: responsibilities
+    /// between the BoardGenerator and the BoardManager.
+    /// I feel like the generator should generate a board to give
+    /// to the manager.
+    /// </summary>
+    public void Initialize(
+        int width,
+        int height,
+        Dictionary<Vector2Int, Tile> tiles,
+        Dictionary<Vector2Int, Piece> pieces)
     {
-        board[y, x] = piece;
-        piece.boardX = x;
-        piece.boardY = y;
+        this.width = width;
+        this.height = height;
+        this.tiles = tiles;
+        this.pieces = pieces;
     }
 
-    
-   
-    public void OnPieceClicked(Piece piece)
+    public void RegisterPiece(Piece piece)
     {
-       
-        if (piece.color != currentPlayer)
+        Vector2Int key = piece.GetPositionData();
+
+        if (pieces[key] != null && pieces[key] != piece)
         {
-            
-            return;
+            log.error(
+                $"Couldn't register {piece} at {key}." +
+                $"{pieces[key]} was already here.");
         }
 
-        // If we have no piece selected, select this piece
-        if (selectedPiece == null)
+        // Register the new piece
+        pieces[key] = piece;
+    }
+
+    public void DeregisterPiece(Piece piece)
+    {
+        Vector2Int key = piece.GetPositionData();
+
+        if (pieces[key] != null && pieces[key] != piece)
         {
-            SelectPiece(piece);
+            log.error(
+                $"Couldn't deregister {piece} at {key}." +
+                $"{pieces[key]} was already here.");
         }
-        else
+
+        // Register the new piece
+        pieces[key] = piece;
+    }
+
+    public void OnPieceClicked(Piece piece)
+    {
+        // Clicked piece was enemy of current turn owner
+        if (piece.color != currentPlayerColor)
         {
-            // Already have a selected piece:
-            //re-select. //capture logi would also go here
+            // If we don't have a piece selected
+            if (selectedPiece == null)
+            {
+                DisplayPieceInfo(piece);
+                return;
+            }
+        }
+        else if (piece.color == currentPlayerColor)
+        {
             DeselectPiece();
             SelectPiece(piece);
         }
-    }
-
-    
+    }    
     
     public void OnTileClicked(Tile tile)
     {
-        if (selectedPiece == null) return; // No piece selected
+        Vector2Int tilePos = tile.GetPositionData();
 
-        Vector2Int clickedPos = new Vector2Int(tile.boardX, tile.boardY);
-
-        // If the tile is in the valid moves list, move there
-        if (validMoves.Contains(clickedPos))
+        if (selectedPiece == null)
         {
-            MovePiece(selectedPiece, tile.boardX, tile.boardY);
-           
-           
-            SwitchTurn(); 
+            if (pieces.TryGetValue(tilePos, out Piece piece))
+            {
+                if (piece != null)
+                {
+                    OnPieceClicked(piece);
+                    return;
+                }
+            }
         }
+        else
+        {
+            // If the tile is in the valid moves list
+            if (validMoves.Contains(tilePos))
+            {
+                Piece occupant = pieces[tilePos];
 
-        // Clear selection 
-        DeselectPiece();
+                if (occupant != null)
+                {
+                    /// TODO:
+                    /// Create an AttackCommand
+                    /// - if the command would kill the piece,
+                    ///   - issue the command.
+                    ///   - capture target to attacker.
+                    ///   - move attacker to tile.
+                    /// - if not,
+                    ///   - issue the command
+                    ///
+
+                    DestroyPieceAt(tilePos);
+                }
+                else
+                {
+                    MovePiece(selectedPiece, tilePos);
+                    SwitchTurn();
+                }
+            }
+            else
+            {
+                /// TODO:
+                /// Indicate that it was an invalid move attempt?
+            }
+
+            // Clear selection
+            DeselectPiece();
+        }
     }
 
-    
-   
+    public bool TryGetOccupant(Tile tile, out Piece occupant)
+    {
+        Vector2Int tilePos = tile.GetPositionData();
+
+        if (!tiles.TryGetValue(tilePos, out Tile foundTile))
+        {
+            occupant = null;
+            return false;
+        }
+
+        if (tile != foundTile)
+        {
+            Debug.LogError("Tile map is fucked");
+            occupant = null;
+            return false;
+        }
+
+        return pieces.TryGetValue(tilePos, out occupant);
+    }
+
     private void SelectPiece(Piece piece)
     {
         selectedPiece = piece;
         validMoves = GetValidMoves(piece);
 
-        // Highlight each tile in validMoves
-        foreach (Vector2Int pos in validMoves)
-        {
-            Tile t = GetTileAt(pos.x, pos.y);
-            t.SetHighlight(true);
-        }
+        //TurnOnHighlights();
+        SetOverlaysOnValidMoves(true);
     }
-
     
     private void DeselectPiece()
     {
-        if (selectedPiece != null)
-        {
-            // Turn off highlights
-            foreach (Vector2Int pos in validMoves)
-            {
-                Tile t = GetTileAt(pos.x, pos.y);
-                t.SetHighlight(false);
-            }
-        }
+        SetOverlaysOnValidMoves(false);
+        //TurnOffHighlights();
         selectedPiece = null;
         validMoves.Clear();
     }
 
- 
-    // Move a piece to (targetX, targetY), capture logic here
-    public void MovePiece(Piece piece, int targetX, int targetY)
+    private void DisplayPieceInfo(Piece piece)
     {
-         int oldX = piece.boardX;
-         int oldY = piece.boardY;
-
-        // If there's a piece at the target square, destroy it
-        Piece occupant = board[targetY, targetX];
-        if (occupant != null && occupant != piece)
-        {
-            
-            Destroy(occupant.gameObject);
-            board[targetY, targetX] = null;
-        }
-
-        // Remove from old location
-        board[oldY, oldX] = null;
-
-        // Update piece coordinates
-        piece.boardX = targetX;
-        piece.boardY = targetY;
-
-        // Place piece in the new location
-        board[targetY, targetX] = piece;
-
-       
-        piece.transform.position = new Vector2(targetX, targetY);
+        /// TODO
     }
 
-   
+    // Move a piece to (targetX, targetY), capture logic here
+    public void MovePiece(Piece piece, Vector2Int targetPos)
+    {
+        piece.MoveTo(targetPos);
+    }
+
+    private void DestroyPieceAt(Vector2Int pos)
+    {
+        // If there's a piece at the target square, destroy it
+        Piece occupant = pieces[pos];
+
+        if (occupant != null)
+        {
+            Destroy(occupant.gameObject);
+            pieces[pos] = null;
+        }
+    }
+
     public List<Vector2Int> GetValidMoves(Piece piece)
     {
         switch (piece.type)
@@ -175,44 +243,50 @@ public class BoardManager : MonoBehaviour
     private List<Vector2Int> GetPawnMoves(Piece piece)
     {
         var moves = new List<Vector2Int>();
-        int x = piece.boardX;
-        int y = piece.boardY;
 
         int direction = (piece.color == PieceColor.White) ? +1 : -1;
+        Vector2Int targetPos;
+        Piece occupant;
+
+        int x           = piece.X;
+        int y           = piece.Y;
+        int forwardY    = y + direction;
+        int forwardY2   = y + (2 * direction);
+        int diagLeftX   = x - 1;
+        int diagRightX  = x + 1;
 
         // Forward 1
-        int forwardY = y + direction;
-        if (IsInBounds(x, forwardY) && board[forwardY, x] == null)
+        targetPos = new(x, forwardY);        
+        if (pieces.TryGetValue(targetPos, out occupant))
         {
-            moves.Add(new Vector2Int(x, forwardY));
+            if (occupant == null)
+                moves.Add(targetPos);
+        }
 
-            // Forward 2 if on starting row
-            bool onStartingRow = (piece.color == PieceColor.White && y == 1)
-                              || (piece.color == PieceColor.Black && y == 6);
-            if (onStartingRow)
+        // Forward 2 if on starting row
+        if (!piece.HasMoved)
+        {
+            targetPos = new(x, forwardY2);
+            if (pieces.TryGetValue(targetPos, out occupant))
             {
-                int forwardY2 = y + 2 * direction;
-                if (IsInBounds(x, forwardY2) && board[forwardY2, x] == null)
-                {
-                    moves.Add(new Vector2Int(x, forwardY2));
-                }
+                if (occupant == null)
+                    moves.Add(targetPos);
             }
         }
 
         // Diagonal captures
-        int diagLeftX = x - 1;
-        int diagRightX = x + 1;
-        if (IsInBounds(diagLeftX, forwardY))
+        targetPos = new(diagLeftX, forwardY);
+        if (pieces.TryGetValue(targetPos, out occupant))
         {
-            Piece occupant = board[forwardY, diagLeftX];
             if (occupant != null && occupant.color != piece.color)
-                moves.Add(new Vector2Int(diagLeftX, forwardY));
+                moves.Add(targetPos);
         }
-        if (IsInBounds(diagRightX, forwardY))
+
+        targetPos = new(diagRightX, forwardY);
+        if (pieces.TryGetValue(targetPos, out occupant))
         {
-            Piece occupant = board[forwardY, diagRightX];
             if (occupant != null && occupant.color != piece.color)
-                moves.Add(new Vector2Int(diagRightX, forwardY));
+                moves.Add(targetPos);
         }
 
         return moves;
@@ -235,8 +309,8 @@ public class BoardManager : MonoBehaviour
     private List<Vector2Int> GetKnightMoves(Piece piece)
     {
         var moves = new List<Vector2Int>();
-        int x = piece.boardX;
-        int y = piece.boardY;
+        int x = piece.X;
+        int y = piece.Y;
 
         int[,] offsets = {
          { +2, +1 }, { +2, -1 }, { -2, +1 }, { -2, -1 },
@@ -249,7 +323,8 @@ public class BoardManager : MonoBehaviour
             int ny = y + offsets[i, 1];
             if (IsInBounds(nx, ny))
             {
-                Piece occupant = board[ny, nx];
+                log.warn($"{new Vector3(nx, ny)}");
+                Piece occupant = pieces[new(nx, ny)];
                 if (occupant == null || occupant.color != piece.color)
                     moves.Add(new Vector2Int(nx, ny));
             }
@@ -287,8 +362,8 @@ public class BoardManager : MonoBehaviour
     private List<Vector2Int> GetKingMoves(Piece piece)
     {
         var moves = new List<Vector2Int>();
-        int x = piece.boardX;
-        int y = piece.boardY;
+        int x = piece.X;
+        int y = piece.Y;
 
         int[] dx = { -1, 0, +1 };
         int[] dy = { -1, 0, +1 };
@@ -302,7 +377,7 @@ public class BoardManager : MonoBehaviour
                 int ny = y + iy;
                 if (IsInBounds(nx, ny))
                 {
-                    Piece occupant = board[ny, nx];
+                    Piece occupant = pieces[new(ny, nx)];
                     if (occupant == null || occupant.color != piece.color)
                         moves.Add(new Vector2Int(nx, ny));
                 }
@@ -318,8 +393,8 @@ public class BoardManager : MonoBehaviour
     private List<Vector2Int> GetMovesInDirection(Piece piece, int dx, int dy)
     {
         var moves = new List<Vector2Int>();
-        int x = piece.boardX;
-        int y = piece.boardY;
+        int x = piece.X;
+        int y = piece.Y;
 
         while (true)
         {
@@ -327,7 +402,7 @@ public class BoardManager : MonoBehaviour
             y += dy;
             if (!IsInBounds(x, y)) break; // off-board => stop
 
-            Piece occupant = board[y, x];
+            Piece occupant = pieces[new(y, x)];
             if (occupant == null)
             {
                 // empty => can move
@@ -345,6 +420,58 @@ public class BoardManager : MonoBehaviour
         return moves;
     }
 
+    private void TurnOnHighlights()
+    {
+        // Highlight each tile in validMoves
+        foreach (Vector2Int pos in validMoves)
+        {            
+            if (tiles.TryGetValue(pos, out Tile t))
+            {
+                t.SetHighlight(true); 
+            }
+        }
+    }
+    private void TurnOffHighlights()
+    {
+        // Turn off highlights
+        foreach (Vector2Int pos in validMoves)
+        {
+            if (tiles.TryGetValue(pos, out Tile t))
+            {
+                t.SetHighlight(false);
+            }
+        }
+    }
+
+    private void SetOverlaysOnValidMoves(bool turnOn)
+    {
+        foreach (Vector2Int pos in validMoves)
+        {
+
+            if (!tiles.TryGetValue(pos, out Tile t))
+            {
+                continue;
+            }
+
+            if (!turnOn)
+            {
+                t.ClearOverlay();
+                continue;
+            }
+
+            if (pieces.ContainsKey(pos))
+            {
+                t.SetOverlay(pieces[pos] != null);
+            }
+
+        }
+    }
+
+    private bool IsInBounds(Vector2Int pos)
+    {
+        return IsInBounds(pos.x, pos.y);
+    }
+
     private bool IsInBounds(int x, int y)
     {
         return (x >= 0 && x < 8 && y >= 0 && y < 8);
@@ -352,26 +479,9 @@ public class BoardManager : MonoBehaviour
     
     private void SwitchTurn() 
     {
-        if (currentPlayer == PieceColor.White)
-            currentPlayer = PieceColor.Black;
+        if (currentPlayerColor == PieceColor.White)
+            currentPlayerColor = PieceColor.Black;
         else
-            currentPlayer = PieceColor.White;
-
-        
+            currentPlayerColor = PieceColor.White;        
     }
-
-    private Tile[,] tiles = new Tile[8, 8];
-
-    public void RegisterTile(Tile tile, int x, int y)
-    {
-        tiles[y, x] = tile;
-    }
-
-    public Tile GetTileAt(int x, int y)
-    {
-        if (x < 0 || x >= 8 || y < 0 || y >= 8)
-            return null;
-        return tiles[y, x];
-    }
-
 }

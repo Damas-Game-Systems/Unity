@@ -1,10 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ChessBoardGenerator : MonoBehaviour
 {
     [Header("Board Dimensions")]
-    public int rows = 8;
     public int columns = 8;
+    public int rows = 8;
 
     [Header("Tile Settings")]
     public GameObject tilePrefab;
@@ -27,10 +28,18 @@ public class ChessBoardGenerator : MonoBehaviour
     public GameObject blackQueenPrefab;
     public GameObject blackKingPrefab;
 
+    private Dictionary<Vector2Int, Tile> tilesAtPositions = new();
+    private Dictionary<Vector2Int, Piece> piecesAtPositions = new();
+
     private void Start()
     {
         GenerateBoard();
         PlaceAllPieces();
+        BoardManager.Instance.Initialize(
+            columns,
+            rows,
+            tilesAtPositions,
+            piecesAtPositions);
     }
 
     private void GenerateBoard()
@@ -46,19 +55,29 @@ public class ChessBoardGenerator : MonoBehaviour
         {
             for (int x = 0; x < columns; x++)
             {
-                Vector3 spawnPos = new Vector3(x, y,1 );
+                Vector2Int boardPos = new(x, y);
+
+                Vector3 spawnPos = new(x, y, 1);
                 GameObject tileGO = Instantiate(tilePrefab, spawnPos, Quaternion.identity, transform);
                 tileGO.name = $"Tile ({x},{y})";
 
                 // Grab Tile script
                 Tile tile = tileGO.GetComponent<Tile>();
-                tile.boardX = x;
-                tile.boardY = y;
 
                 // Alternate color
                 bool isDark = ((x + y) % 2 == 1);
                 tile.defaultColor = isDark ? darkColor : lightColor;
                 tile.GetComponent<SpriteRenderer>().color = tile.defaultColor;
+
+                tile.OnSpawn(boardPos);
+
+                // Add tile to dictionary
+                tilesAtPositions[boardPos] = tile;
+
+                // Add an empty key to the pieces dictionary.
+                // This way, we can still use it like an array,
+                // but with added lookup fns
+                piecesAtPositions[boardPos] = default;
             }
         }
     }
@@ -67,36 +86,36 @@ public class ChessBoardGenerator : MonoBehaviour
     {
         // --- White Pieces ---
         // Row 0
-        PlacePiece(whiteRookPrefab, 0, 0);
-        PlacePiece(whiteKnightPrefab, 1, 0);
-        PlacePiece(whiteBishopPrefab, 2, 0);
-        PlacePiece(whiteQueenPrefab, 3, 0);
-        PlacePiece(whiteKingPrefab, 4, 0);
-        PlacePiece(whiteBishopPrefab, 5, 0);
-        PlacePiece(whiteKnightPrefab, 6, 0);
-        PlacePiece(whiteRookPrefab, 7, 0);
+        SpawnPiece(whiteRookPrefab, 0, 0);
+        SpawnPiece(whiteKnightPrefab, 1, 0);
+        SpawnPiece(whiteBishopPrefab, 2, 0);
+        SpawnPiece(whiteQueenPrefab, 3, 0);
+        SpawnPiece(whiteKingPrefab, 4, 0);
+        SpawnPiece(whiteBishopPrefab, 5, 0);
+        SpawnPiece(whiteKnightPrefab, 6, 0);
+        SpawnPiece(whiteRookPrefab, 7, 0);
 
         // Row 1 (White pawns)
         for (int col = 0; col < 8; col++)
-            PlacePiece(whitePawnPrefab, col, 1);
+            SpawnPiece(whitePawnPrefab, col, 1);
 
         // --- Black Pieces ---
         // Row 7
-        PlacePiece(blackRookPrefab, 0, 7);
-        PlacePiece(blackKnightPrefab, 1, 7);
-        PlacePiece(blackBishopPrefab, 2, 7);
-        PlacePiece(blackQueenPrefab, 3, 7);
-        PlacePiece(blackKingPrefab, 4, 7);
-        PlacePiece(blackBishopPrefab, 5, 7);
-        PlacePiece(blackKnightPrefab, 6, 7);
-        PlacePiece(blackRookPrefab, 7, 7);
+        SpawnPiece(blackRookPrefab, 0, 7);
+        SpawnPiece(blackKnightPrefab, 1, 7);
+        SpawnPiece(blackBishopPrefab, 2, 7);
+        SpawnPiece(blackQueenPrefab, 3, 7);
+        SpawnPiece(blackKingPrefab, 4, 7);
+        SpawnPiece(blackBishopPrefab, 5, 7);
+        SpawnPiece(blackKnightPrefab, 6, 7);
+        SpawnPiece(blackRookPrefab, 7, 7);
 
         // Row 6 (Black pawns)
         for (int col = 0; col < 8; col++)
-            PlacePiece(blackPawnPrefab, col, 6);
+            SpawnPiece(blackPawnPrefab, col, 6);
     }
 
-    private void PlacePiece(GameObject prefab, int x, int y)
+    private void SpawnPiece(GameObject prefab, int x, int y)
     {
         if (prefab == null)
         {
@@ -104,13 +123,13 @@ public class ChessBoardGenerator : MonoBehaviour
             return;
         }
 
-        Vector2 pos = new Vector2(x, y);
-        GameObject pieceGO = Instantiate(prefab, pos, Quaternion.identity, transform);
-
+        Vector2Int pos = new(x, y);
+        GameObject pieceGO = Instantiate(prefab, (Vector2)pos, Quaternion.identity, transform);
         
         Piece piece = pieceGO.GetComponent<Piece>();
         
-        // Register with BoardManager
-        BoardManager.Instance.RegisterPiece(piece, x, y);
+        piece.OnSpawn(pos);
+        // Add to piece dictionary
+        piecesAtPositions[pos] = piece;
     }
 }

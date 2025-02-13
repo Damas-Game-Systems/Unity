@@ -1,28 +1,48 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems; // <-- Add this namespace
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class Tile : MonoBehaviour, IPointerDownHandler
 {
-    public int boardX;  // column
-    public int boardY;  // row
-
     // Colors 
     public Color lightColor = Color.white;
     public Color darkColor = Color.gray;
     public Color defaultColor = Color.white;
     public Color highlightColor = Color.green;  // highlight
 
+    [SerializeField] private GameObject emptyTileOverlayPrefab;
+    [SerializeField] private GameObject occupiedTileOverlayPrefab;
+
+    private GameObject overlay;
+
     private SpriteRenderer rend;
+
+    private int boardX;  // column
+    private int boardY;  // row
+
+    public int X { get { return boardX; } }
+    public int Y { get { return boardY; } }
 
     private void Awake()
     {
         rend = GetComponent<SpriteRenderer>();
     }
 
-    private void Start()
+    public void OnSpawn(Vector2Int spawnPos)
     {
-        BoardManager.Instance.RegisterTile(this, boardX, boardY);
+        SetPositionData(spawnPos);
+    }
+
+    public Vector2Int GetPositionData()
+    {
+        return new Vector2Int(boardX, boardY);
+    }
+
+    public void SetPositionData(Vector2Int pos)
+    {
+        boardX = pos.x;
+        boardY = pos.y;
     }
 
     // Sets the tile’s color
@@ -36,4 +56,28 @@ public class Tile : MonoBehaviour, IPointerDownHandler
     {
         BoardManager.Instance.OnTileClicked(this);
     }
+
+    public void SetOverlay(bool hasPiece)
+    {
+        ClearOverlay();
+
+        if (hasPiece)
+        {
+            overlay = Instantiate(occupiedTileOverlayPrefab, transform);
+        }
+        else
+        {
+            overlay = Instantiate(emptyTileOverlayPrefab, transform);
+        }
+    }
+
+    public void ClearOverlay()
+    {
+        if (overlay != null)
+        {
+            Destroy(overlay);
+        }
+        overlay = null;
+    }
+
 }

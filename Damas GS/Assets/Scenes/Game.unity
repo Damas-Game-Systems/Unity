@@ -196,7 +196,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53f213de0bb380f4f84fe6fb8424e41f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentPlayer: 0
+  log:
+    show: 1
+  currentPlayerColor: 0
   selectedPiece: {fileID: 0}
 --- !u!1 &926419764
 GameObject:
