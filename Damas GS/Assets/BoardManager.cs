@@ -16,11 +16,8 @@ public class BoardManager : MonoBehaviour
     [SerializeField] private int width;
     [SerializeField] private int height;
 
-    private Piece[,] pieces = new Piece[8, 8];
-    private Tile[,] tiles = new Tile[8, 8];
-
-    private Dictionary<Vector2Int, Piece> piecesD = new();
-    private Dictionary<Vector2Int, Tile> tilesD = new();
+    private Dictionary<Vector2Int, Piece> pieces = new();
+    private Dictionary<Vector2Int, Tile> tiles = new();
 
     // Currently selected piece
     [SerializeField]private Piece selectedPiece = null;
@@ -52,38 +49,38 @@ public class BoardManager : MonoBehaviour
     {
         this.width = width;
         this.height = height;
-        tilesD = tiles;
-        piecesD = pieces;
+        this.tiles = tiles;
+        this.pieces = pieces;
     }
 
     public void RegisterPiece(Piece piece)
     {
         Vector2Int key = piece.GetPositionData();
 
-        if (piecesD[key] != null && piecesD[key] != piece)
+        if (pieces[key] != null && pieces[key] != piece)
         {
             log.error(
                 $"Couldn't register {piece} at {key}." +
-                $"{piecesD[key]} was already here.");
+                $"{pieces[key]} was already here.");
         }
 
         // Register the new piece
-        piecesD[key] = piece;
+        pieces[key] = piece;
     }
 
     public void DeregisterPiece(Piece piece)
     {
         Vector2Int key = piece.GetPositionData();
 
-        if (piecesD[key] != null && piecesD[key] != piece)
+        if (pieces[key] != null && pieces[key] != piece)
         {
             log.error(
                 $"Couldn't deregister {piece} at {key}." +
-                $"{piecesD[key]} was already here.");
+                $"{pieces[key]} was already here.");
         }
 
         // Register the new piece
-        piecesD[key] = piece;
+        pieces[key] = piece;
     }
 
     public void OnPieceClicked(Piece piece)
@@ -111,7 +108,7 @@ public class BoardManager : MonoBehaviour
 
         if (selectedPiece == null)
         {
-            if (piecesD.TryGetValue(tilePos, out Piece piece))
+            if (pieces.TryGetValue(tilePos, out Piece piece))
             {
                 if (piece != null)
                 {
@@ -125,7 +122,7 @@ public class BoardManager : MonoBehaviour
             // If the tile is in the valid moves list
             if (validMoves.Contains(tilePos))
             {
-                Piece occupant = piecesD[tilePos];
+                Piece occupant = pieces[tilePos];
 
                 if (occupant != null)
                 {
@@ -162,7 +159,7 @@ public class BoardManager : MonoBehaviour
     {
         Vector2Int tilePos = tile.GetPositionData();
 
-        if (!tilesD.TryGetValue(tilePos, out Tile foundTile))
+        if (!tiles.TryGetValue(tilePos, out Tile foundTile))
         {
             occupant = null;
             return false;
@@ -175,7 +172,7 @@ public class BoardManager : MonoBehaviour
             return false;
         }
 
-        return piecesD.TryGetValue(tilePos, out occupant);
+        return pieces.TryGetValue(tilePos, out occupant);
     }
 
     private void SelectPiece(Piece piece)
@@ -209,12 +206,12 @@ public class BoardManager : MonoBehaviour
     private void DestroyPieceAt(Vector2Int pos)
     {
         // If there's a piece at the target square, destroy it
-        Piece occupant = piecesD[pos];
+        Piece occupant = pieces[pos];
 
         if (occupant != null)
         {
             Destroy(occupant.gameObject);
-            piecesD[pos] = null;
+            pieces[pos] = null;
         }
     }
 
@@ -260,7 +257,7 @@ public class BoardManager : MonoBehaviour
 
         // Forward 1
         targetPos = new(x, forwardY);        
-        if (piecesD.TryGetValue(targetPos, out occupant))
+        if (pieces.TryGetValue(targetPos, out occupant))
         {
             if (occupant == null)
                 moves.Add(targetPos);
@@ -270,7 +267,7 @@ public class BoardManager : MonoBehaviour
         if (!piece.HasMoved)
         {
             targetPos = new(x, forwardY2);
-            if (piecesD.TryGetValue(targetPos, out occupant))
+            if (pieces.TryGetValue(targetPos, out occupant))
             {
                 if (occupant == null)
                     moves.Add(targetPos);
@@ -279,14 +276,14 @@ public class BoardManager : MonoBehaviour
 
         // Diagonal captures
         targetPos = new(diagLeftX, forwardY);
-        if (piecesD.TryGetValue(targetPos, out occupant))
+        if (pieces.TryGetValue(targetPos, out occupant))
         {
             if (occupant != null && occupant.color != piece.color)
                 moves.Add(targetPos);
         }
 
         targetPos = new(diagRightX, forwardY);
-        if (piecesD.TryGetValue(targetPos, out occupant))
+        if (pieces.TryGetValue(targetPos, out occupant))
         {
             if (occupant != null && occupant.color != piece.color)
                 moves.Add(targetPos);
@@ -327,7 +324,7 @@ public class BoardManager : MonoBehaviour
             if (IsInBounds(nx, ny))
             {
                 log.warn($"{new Vector3(nx, ny)}");
-                Piece occupant = piecesD[new(nx, ny)];
+                Piece occupant = pieces[new(nx, ny)];
                 if (occupant == null || occupant.color != piece.color)
                     moves.Add(new Vector2Int(nx, ny));
             }
@@ -380,7 +377,7 @@ public class BoardManager : MonoBehaviour
                 int ny = y + iy;
                 if (IsInBounds(nx, ny))
                 {
-                    Piece occupant = piecesD[new(ny, nx)];
+                    Piece occupant = pieces[new(ny, nx)];
                     if (occupant == null || occupant.color != piece.color)
                         moves.Add(new Vector2Int(nx, ny));
                 }
@@ -405,7 +402,7 @@ public class BoardManager : MonoBehaviour
             y += dy;
             if (!IsInBounds(x, y)) break; // off-board => stop
 
-            Piece occupant = piecesD[new(y, x)];
+            Piece occupant = pieces[new(y, x)];
             if (occupant == null)
             {
                 // empty => can move
@@ -428,7 +425,7 @@ public class BoardManager : MonoBehaviour
         // Highlight each tile in validMoves
         foreach (Vector2Int pos in validMoves)
         {            
-            if (tilesD.TryGetValue(pos, out Tile t))
+            if (tiles.TryGetValue(pos, out Tile t))
             {
                 t.SetHighlight(true); 
             }
@@ -439,7 +436,7 @@ public class BoardManager : MonoBehaviour
         // Turn off highlights
         foreach (Vector2Int pos in validMoves)
         {
-            if (tilesD.TryGetValue(pos, out Tile t))
+            if (tiles.TryGetValue(pos, out Tile t))
             {
                 t.SetHighlight(false);
             }
@@ -448,10 +445,10 @@ public class BoardManager : MonoBehaviour
 
     private void SetOverlaysOnValidMoves(bool turnOn)
     {
-        foreach(Vector2Int pos in validMoves)
+        foreach (Vector2Int pos in validMoves)
         {
 
-            if (!tilesD.TryGetValue(pos, out Tile t))
+            if (!tiles.TryGetValue(pos, out Tile t))
             {
                 continue;
             }
@@ -462,9 +459,9 @@ public class BoardManager : MonoBehaviour
                 continue;
             }
 
-            if (piecesD.ContainsKey(pos))
+            if (pieces.ContainsKey(pos))
             {
-                t.SetOverlay(piecesD[pos] != null);
+                t.SetOverlay(pieces[pos] != null);
             }
 
         }
