@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using static UnityEngine.GraphicsBuffer;
 using Damas.Utils;
 using UnityEngine.UIElements;
+using Damas.Combat;
 
 public class BoardManager : MonoBehaviour
 {
@@ -21,8 +22,17 @@ public class BoardManager : MonoBehaviour
 
     // Currently selected piece
     [SerializeField]private Piece selectedPiece = null;
+
     // The list of valid squares for the selected piece
-    private List<Vector2Int> validMoves = new List<Vector2Int>();
+    private List<Vector2Int> validMoves
+    {
+        get
+        {
+            return selectedPiece != null
+                ? GetValidMoves(selectedPiece)
+                : new ();
+        }
+    }
 
     
     private void Awake()
@@ -33,6 +43,11 @@ public class BoardManager : MonoBehaviour
             return;
         }
         Instance = this;
+    }
+
+    private void Update()
+    {
+        log.warn($"Selected Piece: {selectedPiece}");
     }
 
     /// <summary>
@@ -61,98 +76,161 @@ public class BoardManager : MonoBehaviour
         {
             log.error(
                 $"Couldn't register {piece} at {key}." +
-                $"{pieces[key]} was already here.");
+                $"{pieces[key]} was already registered here.");
+            return;
         }
 
-        // Register the new piece
+        // Register the new piece in the pieces dictionary
+        piece.BeenCaptured += HandleCapture;
         pieces[key] = piece;
     }
 
     public void DeregisterPiece(Piece piece)
     {
+
         Vector2Int key = piece.GetPositionData();
 
-        if (pieces[key] != null && pieces[key] != piece)
+        if (pieces[key] != piece)
         {
             log.error(
                 $"Couldn't deregister {piece} at {key}." +
-                $"{pieces[key]} was already here.");
+                $"{pieces[key]} was not registered here.");
+            return;
         }
 
-        // Register the new piece
-        pieces[key] = piece;
+        // Deregister the new piece from the pieces dictionary
+        piece.BeenCaptured -= HandleCapture;
+        pieces[key] = null;
     }
 
-    public void OnPieceClicked(Piece piece)
+    public void OnPieceClicked(Piece clickedPiece)
     {
-        // Clicked piece was enemy of current turn owner
-        if (piece.color != currentPlayerColor)
+        SetOverlaysOnValidMoves(false);
+
+        if (selectedPiece == null)
         {
-            // If we don't have a piece selected
-            if (selectedPiece == null)
+            if (clickedPiece.color == currentPlayerColor)
             {
-                DisplayPieceInfo(piece);
-                return;
+                SelectPiece(clickedPiece);
+            }
+            else
+            {
+                DisplayPieceInfo(clickedPiece);
             }
         }
-        else if (piece.color == currentPlayerColor)
+        else if (clickedPiece == selectedPiece)
         {
             DeselectPiece();
-            SelectPiece(piece);
         }
+        else if (clickedPiece.color == selectedPiece.color)
+        {
+            DeselectPiece();
+            SelectPiece(clickedPiece);
+        }
+        else
+        {
+            /// TODO:
+            /// Create an AttackCommand
+            /// - if the command would kill the piece,
+            ///   - issue the command.
+            ///   - capture target to attacker.
+            ///   - move attacker to tile.
+            /// - if not,
+            ///   - issue the command
+            ///
+
+            AttackCommand command = new(selectedPiece.Attack, clickedPiece.Health);
+            if (command.WouldKill())
+            {
+                command.Execute();
+            }
+            else
+            {
+                command.Execute();
+                SwitchTurn();
+            }
+        }
+
+        //if (clickedPiece == selectedPiece)
+        //{
+        //    DeselectPiece();
+        //    return;
+        //}
+
+        //// Clicked piece was enemy of current turn owner
+        //if (clickedPiece.color != currentPlayerColor)
+        //{
+        //    // If we don't have a piece selected
+        //    if (selectedPiece == null)
+        //    {
+        //        DisplayPieceInfo(clickedPiece);
+        //    }
+        //    else
+        //    {
+
+        //    }
+        //}
+        //else if (clickedPiece.color == currentPlayerColor)
+        //{
+
+        //}
     }    
     
     public void OnTileClicked(Tile tile)
     {
         Vector2Int tilePos = tile.GetPositionData();
 
-        if (selectedPiece == null)
+        if (TryGetOccupant(tile, out Piece clickedPiece))
         {
-            if (pieces.TryGetValue(tilePos, out Piece piece))
-            {
-                if (piece != null)
-                {
-                    OnPieceClicked(piece);
-                    return;
-                }
-            }
+            log.print($"{tile.gameObject.name} had an occupant: {clickedPiece.gameObject}");
+            OnPieceClicked(clickedPiece);
+        }
+        else if (validMoves.Contains(tilePos))
+        {
+            MovePiece(selectedPiece, tilePos);
+            SwitchTurn();
         }
         else
         {
-            // If the tile is in the valid moves list
-            if (validMoves.Contains(tilePos))
-            {
-                Piece occupant = pieces[tilePos];
-
-                if (occupant != null)
-                {
-                    /// TODO:
-                    /// Create an AttackCommand
-                    /// - if the command would kill the piece,
-                    ///   - issue the command.
-                    ///   - capture target to attacker.
-                    ///   - move attacker to tile.
-                    /// - if not,
-                    ///   - issue the command
-                    ///
-
-                    DestroyPieceAt(tilePos);
-                }
-                else
-                {
-                    MovePiece(selectedPiece, tilePos);
-                    SwitchTurn();
-                }
-            }
-            else
-            {
-                /// TODO:
-                /// Indicate that it was an invalid move attempt?
-            }
-
-            // Clear selection
-            DeselectPiece();
+            /// TODO:
+            /// Indicate that it was an invalid move attempt?
         }
+
+        //if (selectedPiece == null)
+        //{
+        //    if (pieces.TryGetValue(tilePos, out Piece piece))
+        //    {
+        //        if (piece != null)
+        //        {
+        //            OnPieceClicked(piece);
+        //            return;
+        //        }
+        //    }
+        //}
+        //else
+        //{
+        //    // If the tile is in the valid moves list
+        //    if (validMoves.Contains(tilePos))
+        //    {
+        //        Piece occupant = pieces[tilePos];
+
+        //        if (occupant != null)
+        //        {
+
+        //        }
+        //        else
+        //        {
+
+        //        }
+        //    }
+        //    else
+        //    {
+
+        //    }
+
+        //    //// Clear selection
+        //    //DeselectPiece();
+        //}
     }
 
     public bool TryGetOccupant(Tile tile, out Piece occupant)
@@ -172,13 +250,18 @@ public class BoardManager : MonoBehaviour
             return false;
         }
 
-        return pieces.TryGetValue(tilePos, out occupant);
+        if (!pieces.TryGetValue(tilePos, out occupant))
+        {
+            return false;
+        }
+
+        return occupant != null;
     }
 
     private void SelectPiece(Piece piece)
     {
+        log.print($"Selecting {piece.gameObject.name}");
         selectedPiece = piece;
-        validMoves = GetValidMoves(piece);
 
         //TurnOnHighlights();
         SetOverlaysOnValidMoves(true);
@@ -186,10 +269,9 @@ public class BoardManager : MonoBehaviour
     
     private void DeselectPiece()
     {
-        SetOverlaysOnValidMoves(false);
+        log.print($"Deselecting piece: {selectedPiece}");
         //TurnOffHighlights();
         selectedPiece = null;
-        validMoves.Clear();
     }
 
     private void DisplayPieceInfo(Piece piece)
@@ -200,6 +282,7 @@ public class BoardManager : MonoBehaviour
     // Move a piece to (targetX, targetY), capture logic here
     public void MovePiece(Piece piece, Vector2Int targetPos)
     {
+        SetOverlaysOnValidMoves(false);
         piece.MoveTo(targetPos);
     }
 
@@ -445,9 +528,12 @@ public class BoardManager : MonoBehaviour
 
     private void SetOverlaysOnValidMoves(bool turnOn)
     {
+        log.print(
+            $"Setting overlays to {(turnOn ? "on":"off")}." +
+            $"Valid moves count: {validMoves.Count}");
+
         foreach (Vector2Int pos in validMoves)
         {
-
             if (!tiles.TryGetValue(pos, out Tile t))
             {
                 continue;
@@ -463,7 +549,6 @@ public class BoardManager : MonoBehaviour
             {
                 t.SetOverlay(pieces[pos] != null);
             }
-
         }
     }
 
@@ -477,11 +562,35 @@ public class BoardManager : MonoBehaviour
         return (x >= 0 && x < 8 && y >= 0 && y < 8);
     }
     
-    private void SwitchTurn() 
+    private void SwitchTurn()
     {
+        DeselectPiece();
+
+        currentPlayerColor = currentPlayerColor == PieceColor.White
+            ? PieceColor.Black
+            : PieceColor.White;
+    }
+
+    private void HandleCapture(Piece piece)
+    {
+        selectedPiece.Captures.Add(piece);
+
         if (currentPlayerColor == PieceColor.White)
-            currentPlayerColor = PieceColor.Black;
+        {
+            /// TODO:
+            /// Go to White's captured pieces
+            /// For now,
+            DestroyPieceAt(piece.GetPositionData());
+        }
         else
-            currentPlayerColor = PieceColor.White;        
+        {
+            /// TODO:
+            /// Go to Black's captured pieces
+            /// For now,
+            DestroyPieceAt(piece.GetPositionData());
+        }
+
+        MovePiece(selectedPiece, piece.GetPositionData());
+        SwitchTurn();
     }
 }

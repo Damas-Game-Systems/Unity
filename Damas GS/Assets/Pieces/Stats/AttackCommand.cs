@@ -14,7 +14,7 @@ namespace Damas.Combat
 
         public bool WouldKill()
         {
-            return clientAttack.CurrentValue > receiverHealth.CurrentValue;
+            return clientAttack.CurrentValue >= receiverHealth.CurrentValue;
         }
 
         public void Execute()
