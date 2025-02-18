@@ -35,6 +35,7 @@ namespace Damas.Combat
 
             if (currentValue < 0)
             {
+                currentValue = 0;
             }
         }
 

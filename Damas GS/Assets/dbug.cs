@@ -9,7 +9,7 @@ namespace Damas.Utils
         private const string tooLongMsg =
             "Message was over char limit. Truncted: ";
 
-        [SerializeField] private bool show = true;
+        [SerializeField] private bool show;
 
         private int tooLong = 500;
         private int maxReportSize = 10;
@@ -72,8 +72,8 @@ namespace Damas.Utils
         private string trim(string msg)
         {
             return isTooLong(msg)
-                ? msg
-                : (tooLong + msg)[..tooLong];
+                ? (tooLongMsg + msg)[..tooLong]
+                : msg;
         }
 
         private bool isTooLong(string msg)
