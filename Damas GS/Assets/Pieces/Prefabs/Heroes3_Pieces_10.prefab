@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 7144760896851322908}
   - component: {fileID: 2096905006692961422}
-  - component: {fileID: 5788353408335219940}
   - component: {fileID: -4567357527413618298}
+  - component: {fileID: 8155390416112402225}
   m_Layer: 0
   m_Name: Heroes3_Pieces_10
   m_TagString: Untagged
@@ -86,24 +86,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &5788353408335219940
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4007910624560564020}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b340274c41c95fe42b724f90429f9906, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  log:
-    show: 1
-  type: 5
-  color: 1
-  maxHealth: 1
-  defaultAttack: 1
 --- !u!61 &-4567357527413618298
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -149,3 +131,21 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.75, y: 1.21875}
   m_EdgeRadius: 0
+--- !u!114 &8155390416112402225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4007910624560564020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90d106022dbf81146a692a4c6a0d9397, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  log:
+    show: 0
+  type: 5
+  color: 1
+  maxHealth: 1
+  defaultAttack: 1

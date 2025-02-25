@@ -9,7 +9,7 @@ public enum PieceColor { White, Black }
 
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(Collider2D))]
-public class Piece : MonoBehaviour
+public abstract class Piece : MonoBehaviour
 {
     [SerializeField] private dbug log = new();
 
@@ -29,8 +29,8 @@ public class Piece : MonoBehaviour
     private int boardX;
     private int boardY;
 
-    public int X { get { return boardX; } }
-    public int Y { get { return boardY; } }
+    public int X => boardX;
+    public int Y => boardY;
     public bool HasMoved { get; private set; }
 
     private void Update()
@@ -45,7 +45,7 @@ public class Piece : MonoBehaviour
         }
     }
 
-    public void OnSpawn(Vector2Int spawnCoords)
+    public virtual void OnSpawn(Vector2Int spawnCoords)
     {
         SetPositionData(spawnCoords);
 
@@ -78,7 +78,9 @@ public class Piece : MonoBehaviour
     {
         BeenCaptured?.Invoke(this);
     }
-
+    
+    public abstract List<Vector2Int> GetValidMoves();
+    
     //// This replaces OnMouseDown()
     //public void OnPointerDown(PointerEventData eventData)
     //{
