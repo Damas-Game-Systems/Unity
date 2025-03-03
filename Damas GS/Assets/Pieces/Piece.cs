@@ -9,7 +9,7 @@ public enum PieceColor { White, Black }
 
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(Collider2D))]
-public abstract class Piece : MonoBehaviour
+public abstract class Piece : MonoBehaviour, ISelectable
 {
     [SerializeField] private dbug log = new();
 
@@ -31,7 +31,9 @@ public abstract class Piece : MonoBehaviour
 
     public int X => boardX;
     public int Y => boardY;
+
     public bool HasMoved { get; private set; }
+    public bool IsSelected { get; private set; }
 
     private void Update()
     {
@@ -80,7 +82,17 @@ public abstract class Piece : MonoBehaviour
     }
     
     public abstract List<Vector2Int> GetValidMoves();
-    
+
+    public void Select()
+    {
+        IsSelected = true;
+    }
+
+    public void Deselect()
+    {
+        IsSelected = false;
+    }
+
     //// This replaces OnMouseDown()
     //public void OnPointerDown(PointerEventData eventData)
     //{

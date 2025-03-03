@@ -248,16 +248,19 @@ public class BoardManager : MonoBehaviour
     private void SelectPiece(Piece piece)
     {
         log.print($"Selecting {piece.gameObject.name}");
-        selectedPiece = piece;
 
-        //TurnOnHighlights();
+        selectedPiece = piece;
+        selectedPiece?.Select();
+
         SetOverlaysOnValidMoves(true);
     }
     
     private void DeselectPiece()
     {
         log.print($"Deselecting piece: {selectedPiece}");
-        //TurnOffHighlights();
+
+        selectedPiece?.Deselect();
+
         selectedPiece = null;
     }
 
