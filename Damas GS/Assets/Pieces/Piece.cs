@@ -19,11 +19,11 @@ public abstract class Piece : MonoBehaviour, ISelectable
     [SerializeField] private int maxHealth;
     [SerializeField] private int defaultAttack;
 
+    [SerializeField] private PieceInfoPanel infoPanel;
+
     public HealthStat Health { get; private set; }
     public AttackStat Attack { get; private set; }
     public List<Piece> Captures { get; private set; } = new();
-
-    public event System.Action<Piece> BeenCaptured;
 
     // Current position on the board
     private int boardX;
@@ -34,6 +34,15 @@ public abstract class Piece : MonoBehaviour, ISelectable
 
     public bool HasMoved { get; private set; }
     public bool IsSelected { get; private set; }
+
+
+    public event System.Action<Piece> BeenCaptured;
+
+    private void OnEnable()
+    {
+        infoPanel?.Initialize(this);
+    }
+
 
     private void Update()
     {

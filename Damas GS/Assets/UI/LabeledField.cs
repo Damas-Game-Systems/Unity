@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class LabeledField : MonoBehaviour
 {
     [Header("Internal Refs")]
+    [SerializeField] private Image bkg;
     [SerializeField] private Image labelBKG;
     [SerializeField] private TMP_Text label;
     [SerializeField] private Image valueBKG;
@@ -36,6 +37,7 @@ public class LabeledField : MonoBehaviour
 
     public void On()
     {
+        bkg.enabled = true;
         labelBKG.enabled = true;
         label.enabled = true;
         valueBKG.enabled = true;
@@ -44,6 +46,7 @@ public class LabeledField : MonoBehaviour
 
     public void Off()
     {
+        bkg.enabled = false;
         labelBKG.enabled = false;
         label.enabled = false;
         valueBKG.enabled = false;

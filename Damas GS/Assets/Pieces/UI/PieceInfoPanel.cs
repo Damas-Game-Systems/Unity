@@ -27,16 +27,26 @@ public class PieceInfoPanel : MonoBehaviour
             return;
         }
 
+        GetComponent<Canvas>().worldCamera = Camera.main;
+
         this.piece = piece;
 
         pieceType.text = piece.type.ToString();
         pieceColor.Label = "Team";
         health.Label = "Health";
         attack.Label = "Attack Power";
+
+        Off();
     }
 
     private void Update()
     {
+        if (piece == null)
+        {
+            log.error($"Init failed on {name}");
+            return;
+        }
+
         if (piece.IsSelected && !IsOn)
         {
             On();
