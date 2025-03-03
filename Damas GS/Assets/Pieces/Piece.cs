@@ -1,8 +1,7 @@
 using Damas.Combat;
+using Damas.Utils;
 using System.Collections.Generic;
 using UnityEngine;
-using Damas.Utils;
-using UnityEngine.EventSystems; // <-- Add this namespace
 
 public enum PieceType { Pawn, Rook, Knight, Bishop, Queen, King }
 public enum PieceColor { White, Black }

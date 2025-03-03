@@ -1,9 +1,7 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using static UnityEngine.GraphicsBuffer;
+﻿using Damas.Combat;
 using Damas.Utils;
-using UnityEngine.UIElements;
-using Damas.Combat;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class BoardManager : MonoBehaviour
 {
