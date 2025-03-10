@@ -66,39 +66,59 @@ public class BoardManager : MonoBehaviour
         this.pieces = pieces;
     }
 
-    public void RegisterPiece(Piece piece)
+    public bool RegisterPiece(Piece piece, out string error)
     {
+        error = "";
+
         Vector2Int key = piece.GetPositionData();
 
-        if (pieces[key] != null && pieces[key] != piece)
+        if (!pieces.ContainsKey(key))
         {
-            log.error(
-                $"Couldn't register {piece} at {key}." +
-                $"{pieces[key]} was already registered here.");
-            return;
+            error = 
+                $"Initializing key at  {key}.";
+
+            pieces[key] = piece;
+            return true;
+        }
+        else if (pieces[key] != null && pieces[key] != piece)
+        {
+            error =
+                $"Couldn't register {piece.name} at {key}." +
+                $"{pieces[key].name} was already registered here.";
+            return false;
         }
 
         // Register the new piece in the pieces dictionary
         piece.BeenCaptured += HandleCapture;
         pieces[key] = piece;
+        return true;
     }
 
-    public void DeregisterPiece(Piece piece)
+    public bool DeregisterPiece(Piece piece, out string error)
     {
+        error = "";
 
         Vector2Int key = piece.GetPositionData();
 
-        if (pieces[key] != piece)
+        if (!pieces.ContainsKey(key))
         {
-            log.error(
-                $"Couldn't deregister {piece} at {key}." +
-                $"{pieces[key]} was not registered here.");
-            return;
+            error = 
+                $"Couldn't deregister {piece.name} at {key}." +
+                $"no key at {key}";
+            return false;
+        }
+        else if (pieces[key] != piece)
+        {
+            error =
+                $"Couldn't deregister {piece.name} at {key}." +
+                $"{piece.name} is not registered to {key}";
+            return false;
         }
 
         // Deregister the new piece from the pieces dictionary
         piece.BeenCaptured -= HandleCapture;
         pieces[key] = null;
+        return true;
     }
 
     public void OnPieceClicked(Piece clickedPiece)

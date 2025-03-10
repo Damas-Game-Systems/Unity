@@ -20,6 +20,8 @@ public abstract class Piece : MonoBehaviour, ISelectable
 
     [SerializeField] private PieceInfoPanel infoPanel;
 
+    private SpriteRenderer sRenderer;
+
     public HealthStat Health { get; private set; }
     public AttackStat Attack { get; private set; }
     public List<Piece> Captures { get; private set; } = new();
@@ -31,11 +33,19 @@ public abstract class Piece : MonoBehaviour, ISelectable
     public int X => boardX;
     public int Y => boardY;
 
-    public bool HasMoved { get; private set; }
-    public bool IsSelected { get; private set; }
+    [field: ReadOnly] public bool IsRegistered { get; private set; }
+    [field: ReadOnly] public bool HasMoved { get; private set; }
+    [field: ReadOnly] public bool IsSelected { get; private set; }
+
+    public float OffsetY => sRenderer.sprite.bounds.extents.y;
 
 
     public event System.Action<Piece> BeenCaptured;
+
+    private void Awake()
+    {
+        sRenderer = GetComponent<SpriteRenderer>();
+    }
 
     private void OnEnable()
     {
@@ -57,7 +67,7 @@ public abstract class Piece : MonoBehaviour, ISelectable
 
     public virtual void OnSpawn(Vector2Int spawnCoords)
     {
-        SetPositionData(spawnCoords);
+        MoveTo(spawnCoords);
 
         Health = new(maxHealth);
         Attack = new(defaultAttack);
@@ -70,18 +80,31 @@ public abstract class Piece : MonoBehaviour, ISelectable
         return new(boardX, boardY);
     }
 
-    public void SetPositionData(Vector2Int pos)
+    public void SetBoardIndex(Vector2Int pos)
     {
         boardX = pos.x; boardY = pos.y;
     }
 
     public void MoveTo(Vector2Int newPos)
     {
-        BoardManager.Instance.DeregisterPiece(this);
-        SetPositionData(newPos);
-        BoardManager.Instance.RegisterPiece(this);
-        transform.position = (Vector2)newPos;
-        HasMoved = true;
+        string errorMsg = "";
+
+        if (IsRegistered)
+        {
+            BoardManager.Instance.DeregisterPiece(this, out errorMsg);
+            HasMoved = true;
+        }
+
+        SetBoardIndex(newPos);
+
+        if (!BoardManager.Instance.RegisterPiece(this, out errorMsg))
+        {
+            log.error(errorMsg);
+            return;
+        }
+
+        IsRegistered = true;
+        transform.position = new Vector2(newPos.x, newPos.y - OffsetY);
     }
 
     protected virtual void OnCapture()
