@@ -1,26 +1,30 @@
+using Damas.UI;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class King : Piece
+namespace Damas
 {
-    public override List<Vector2Int> GetValidMoves()
+    public class King : Piece
     {
-        List<Vector2Int> moves = new();
-        int[] dx = { -1, 0, +1 };
-        int[] dy = { -1, 0, +1 };
-
-        foreach (int ix in dx)
+        public override List<Vector2Int> GetValidMoves()
         {
-            foreach (int iy in dy)
+            List<Vector2Int> moves = new();
+            int[] dx = { -1, 0, +1 };
+            int[] dy = { -1, 0, +1 };
+
+            foreach (int ix in dx)
             {
-                if (ix == 0 && iy == 0) continue;
-                Vector2Int pos = new(X + ix, Y + iy);
-                if (BoardManager.Instance.IsValidMove(this, pos))
+                foreach (int iy in dy)
                 {
-                    moves.Add(pos);
+                    if (ix == 0 && iy == 0) continue;
+                    Vector2Int pos = new(X + ix, Y + iy);
+                    if (BoardManager.Instance.IsValidMove(this, pos))
+                    {
+                        moves.Add(pos);
+                    }
                 }
             }
+            return moves;
         }
-        return moves;
     }
 }

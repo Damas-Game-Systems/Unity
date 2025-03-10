@@ -104,6 +104,7 @@ MonoBehaviour:
   highlightColor: {r: 0, g: 1, b: 0, a: 1}
   emptyTileOverlayPrefab: {fileID: 8701496222182921568, guid: 9af7d3448b4fd074ab1d647375483257, type: 3}
   occupiedTileOverlayPrefab: {fileID: 8701496222182921568, guid: 87986ff1d908c5f4397df33aa19885e2, type: 3}
+  selectedTileOverlayPrefab: {fileID: 8701496222182921568, guid: b0f46f4e72f4e6b48a5705433ff03b99, type: 3}
 --- !u!61 &4392616876791706885
 BoxCollider2D:
   m_ObjectHideFlags: 0

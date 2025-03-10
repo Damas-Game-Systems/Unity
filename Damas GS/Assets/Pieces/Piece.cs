@@ -1,133 +1,167 @@
 using Damas.Combat;
+using Damas.UI;
 using Damas.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PieceType { Pawn, Rook, Knight, Bishop, Queen, King }
-public enum PieceColor { White, Black }
-
-[RequireComponent(typeof(SpriteRenderer))]
-[RequireComponent(typeof(Collider2D))]
-public abstract class Piece : MonoBehaviour, ISelectable
+namespace Damas
 {
-    [SerializeField] private dbug log = new();
+    public enum PieceType { Pawn, Rook, Knight, Bishop, Queen, King }
+    public enum PieceColor { White, Black }
 
-    public PieceType type;
-    public PieceColor color;
-
-    [SerializeField] private int maxHealth;
-    [SerializeField] private int defaultAttack;
-
-    [SerializeField] private PieceInfoPanel infoPanel;
-
-    private SpriteRenderer sRenderer;
-
-    public HealthStat Health { get; private set; }
-    public AttackStat Attack { get; private set; }
-    public List<Piece> Captures { get; private set; } = new();
-
-    // Current position on the board
-    private int boardX;
-    private int boardY;
-
-    public int X => boardX;
-    public int Y => boardY;
-
-    [field: ReadOnly] public bool IsRegistered { get; private set; }
-    [field: ReadOnly] public bool HasMoved { get; private set; }
-    [field: ReadOnly] public bool IsSelected { get; private set; }
-
-    public float OffsetY => sRenderer.sprite.bounds.extents.y;
-
-
-    public event System.Action<Piece> BeenCaptured;
-
-    private void Awake()
+    [RequireComponent(typeof(SpriteRenderer))]
+    [RequireComponent(typeof(Collider2D))]
+    public abstract class Piece : MonoBehaviour, ISelectable
     {
-        sRenderer = GetComponent<SpriteRenderer>();
-    }
+        [SerializeField] private dbug log = new();
 
-    private void OnEnable()
-    {
-        infoPanel?.Initialize(this);
-    }
+        public PieceType type;
+        public PieceColor color;
+
+        [SerializeField] private int maxHealth;
+        [SerializeField] private int defaultAttack;
+
+        private SpriteRenderer sRenderer;
+
+        public HealthStat Health { get; private set; }
+        public AttackStat Attack { get; private set; }
+        public List<Piece> Captures { get; private set; } = new();
+
+        // Current position on the board
+        private int boardX;
+        private int boardY;
+
+        public int X => boardX;
+        public int Y => boardY;
+        public Vector2Int BoardKey => new(X, Y);
+
+        [field: ReadOnly] public bool IsRegistered { get; private set; }
+        [field: ReadOnly] public bool HasMoved { get; private set; }
+        [field: ReadOnly] public bool IsSelected { get; private set; }
+        [field: ReadOnly] public PieceInfoWindow InfoWindow { get; private set; }
+
+        public float OffsetY => sRenderer.sprite.bounds.extents.y;
 
 
-    private void Update()
-    {
-        log.print(
-            $"{gameObject.name}" +
-            $"| Health: {Health.CurrentValue} Attack: {Attack.CurrentValue}");
+        public event System.Action<Piece> BeenCaptured;
 
-        if (Health.CurrentValue <= 0)
+        private void Awake()
         {
-            OnCapture();
-        }
-    }
-
-    public virtual void OnSpawn(Vector2Int spawnCoords)
-    {
-        MoveTo(spawnCoords);
-
-        Health = new(maxHealth);
-        Attack = new(defaultAttack);
-
-        HasMoved = false;
-    }
-
-    public Vector2Int GetPositionData()
-    {
-        return new(boardX, boardY);
-    }
-
-    public void SetBoardIndex(Vector2Int pos)
-    {
-        boardX = pos.x; boardY = pos.y;
-    }
-
-    public void MoveTo(Vector2Int newPos)
-    {
-        string errorMsg = "";
-
-        if (IsRegistered)
-        {
-            BoardManager.Instance.DeregisterPiece(this, out errorMsg);
-            HasMoved = true;
+            sRenderer = GetComponent<SpriteRenderer>();
         }
 
-        SetBoardIndex(newPos);
-
-        if (!BoardManager.Instance.RegisterPiece(this, out errorMsg))
+        private void OnEnable()
         {
-            log.error(errorMsg);
-            return;
+            Subscribe();
         }
 
-        IsRegistered = true;
-        transform.position = new Vector2(newPos.x, newPos.y - OffsetY);
-    }
 
-    protected virtual void OnCapture()
-    {
-        BeenCaptured?.Invoke(this);
-    }
-    
-    public abstract List<Vector2Int> GetValidMoves();
+        private void Update()
+        {
+            log.print(
+                $"{gameObject.name}" +
+                $"| Health: {Health.CurrentValue} Attack: {Attack.CurrentValue}");
 
-    public void Select()
-    {
-        IsSelected = true;
-    }
+            if (Health.CurrentValue <= 0)
+            {
+                OnCapture();
+            }
+        }
 
-    public void Deselect()
-    {
-        IsSelected = false;
-    }
+        public virtual void OnSpawn(Vector2Int spawnCoords)
+        {
+            MoveTo(spawnCoords);
 
-    //// This replaces OnMouseDown()
-    //public void OnPointerDown(PointerEventData eventData)
-    //{
-    //    Debug.Log($"Clicked on {name} (color = {color}) at boardX={X}, boardY={Y}");
-    //    BoardManager.Instance.OnPieceClicked(this);
-    //}
+            Health = new(maxHealth);
+            Attack = new(defaultAttack);
+
+            HasMoved = false;
+        }
+
+        public Vector2Int GetPositionData()
+        {
+            return new(boardX, boardY);
+        }
+
+        public void SetBoardIndex(Vector2Int pos)
+        {
+            boardX = pos.x; boardY = pos.y;
+        }
+
+        public void MoveTo(Vector2Int newPos)
+        {
+            string errorMsg = "";
+
+            if (IsRegistered)
+            {
+                BoardManager.Instance.DeregisterPiece(this, out errorMsg);
+                HasMoved = true;
+            }
+
+            SetBoardIndex(newPos);
+
+            if (!BoardManager.Instance.RegisterPiece(this, out errorMsg))
+            {
+                log.error(errorMsg);
+                return;
+            }
+
+            IsRegistered = true;
+            transform.position = new Vector2(newPos.x, newPos.y - OffsetY);
+        }
+
+        protected virtual void OnCapture()
+        {
+            BeenCaptured?.Invoke(this);
+        }
+
+        public abstract List<Vector2Int> GetValidMoves();
+
+        public void Select()
+        {
+            IsSelected = true;
+
+            PieceInfoWindowData windowData = new(
+                Camera.main,
+                transform.position + new Vector3(0f, OffsetY * 2, 0f),
+                this
+            );
+
+            UiManager.Instance.PieceInfoUI.RequestOpenWindow(windowData);
+        }
+
+        public void Deselect()
+        {
+            IsSelected = false;
+
+
+            if (InfoWindow != null)
+            {
+                UiManager.Instance.PieceInfoUI.RequestCloseWindow(InfoWindow);
+            }
+        }
+
+        private void Subscribe()
+        {
+            UiManager.Instance.PieceInfoUI.WindowOpened += HandlePieceWindowOpened;
+        }
+
+        private void Unsubscribe()
+        {
+            UiManager.Instance.PieceInfoUI.WindowOpened -= HandlePieceWindowOpened;
+        }
+
+        private void HandlePieceWindowOpened(PieceInfoWindow window)
+        {
+            if (window.Piece == this)
+            {
+                InfoWindow = window;
+            }
+        }
+
+        private void OnDisable()
+        {
+            Unsubscribe();
+        }
+    } 
 }
