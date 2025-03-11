@@ -26,6 +26,7 @@ namespace Damas
         public HealthStat Health { get; private set; }
         public AttackStat Attack { get; private set; }
         public List<Piece> Captures { get; private set; } = new();
+        public bool IsLocked { get; set; } = false;
 
         // Current position on the board
         private int boardX;
@@ -64,7 +65,7 @@ namespace Damas
 
             if (Health.CurrentValue <= 0)
             {
-                OnCapture();
+                OnCapture(null);
             }
         }
 
@@ -74,7 +75,7 @@ namespace Damas
 
             Health = new(maxHealth);
             Attack = new(defaultAttack);
-
+            Debug.Log($"OnSpawn Called for {this.name} at {spawnCoords}");
             HasMoved = false;
         }
 
@@ -95,6 +96,7 @@ namespace Damas
             if (IsRegistered)
             {
                 BoardManager.Instance.DeregisterPiece(this, out errorMsg);
+                
                 HasMoved = true;
             }
 
@@ -108,15 +110,35 @@ namespace Damas
 
             IsRegistered = true;
             transform.position = new Vector2(newPos.x, newPos.y - OffsetY);
+            if (BoardManager.Instance.Initialized)
+            {
+                OnAfterMove();
+            }
         }
 
-        protected virtual void OnCapture()
+        /// <summary>
+        /// for the bishop and king
+        /// </summary>
+        protected virtual void OnAfterMove()
+        {
+            
+        }
+
+        public virtual void OnCapture(Piece killer)
         {
             BeenCaptured?.Invoke(this);
         }
 
-        public abstract List<Vector2Int> GetValidMoves();
+        public virtual List<Vector2Int> GetValidMoves()
+        {
+            // If locked, no moves
+            if (IsLocked) return new List<Vector2Int>();
 
+            //else just do normal moves
+            return GetValidMovesInternal();
+        }
+
+        public abstract List<Vector2Int> GetValidMovesInternal();
         public void Select()
         {
             IsSelected = true;

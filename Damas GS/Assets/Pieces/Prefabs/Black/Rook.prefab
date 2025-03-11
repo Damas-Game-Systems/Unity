@@ -147,5 +147,5 @@ MonoBehaviour:
     show: 1
   type: 1
   color: 1
-  maxHealth: 1
-  defaultAttack: 1
+  maxHealth: 8
+  defaultAttack: 2

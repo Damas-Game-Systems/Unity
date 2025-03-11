@@ -10,16 +10,18 @@ namespace Damas
         [SerializeField] dbug log;
 
         //Keep track of whose turn it is 
-        [SerializeField] private PieceColor currentPlayerColor = PieceColor.White;
+        [SerializeField] public PieceColor currentPlayerColor = PieceColor.White;
 
         [SerializeField] private int width;
         [SerializeField] private int height;
 
-        private Dictionary<Vector2Int, Piece> pieces = new();
-        private Dictionary<Vector2Int, Tile> tiles = new();
+        public Dictionary<Vector2Int, Piece> pieces = new();
+        public Dictionary<Vector2Int, Tile> tiles = new();
 
         // Currently selected piece
         [SerializeField]private Piece selectedPiece = null;
+        
+        public bool Initialized = false;
 
         // // The list of valid squares for the selected piece
         // private List<Vector2Int> validMoves
@@ -53,6 +55,7 @@ namespace Damas
             this.height = height;
             this.tiles = tiles;
             this.pieces = pieces;
+            Initialized = true;
         }
 
         public bool RegisterPiece(Piece piece, out string error)
@@ -156,7 +159,7 @@ namespace Damas
                 }
 
                 // If tile is valid, perform the attack
-                AttackCommand command = new(selectedPiece.Attack, clickedPiece.Health);
+                AttackCommand command = new(selectedPiece, clickedPiece);
                 if (command.WouldKill())
                 {
                     command.Execute();
@@ -377,7 +380,7 @@ namespace Damas
             }
         }
 
-        private bool IsInBounds(Vector2Int pos)
+        public bool IsInBounds(Vector2Int pos)
         {
             return IsInBounds(pos.x, pos.y);
         }
@@ -390,7 +393,11 @@ namespace Damas
         private void SwitchTurn()
         {
             DeselectPiece();
-
+            if (selectedPiece is King)
+            {
+                King king = selectedPiece as King;
+                king.RemoveBuffFromAllies();
+            }
             currentPlayerColor = currentPlayerColor == PieceColor.White
                 ? PieceColor.Black
                 : PieceColor.White;

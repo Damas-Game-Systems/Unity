@@ -147,6 +147,5 @@ MonoBehaviour:
     show: 0
   type: 5
   color: 0
-  maxHealth: 1
+  maxHealth: 8
   defaultAttack: 1
-  infoPanel: {fileID: 0}

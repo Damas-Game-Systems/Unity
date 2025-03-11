@@ -6,7 +6,9 @@ namespace Damas
 {
     public class King : Piece
     {
-        public override List<Vector2Int> GetValidMoves()
+        private List<Piece> currentlyBuffedAllies = new();
+        
+        public override List<Vector2Int> GetValidMovesInternal()
         {
             List<Vector2Int> moves = new();
             int[] dx = { -1, 0, +1 };
@@ -26,5 +28,61 @@ namespace Damas
             }
             return moves;
         }
+        
+        protected override void OnAfterMove()
+        {
+            base.OnAfterMove();
+
+            // Remove old buffs
+            RemoveBuffFromAllies();
+
+          
+            ApplyBuffToNearbyAllies();
+        }
+
+        // E.g. remove buffs at the end of the turn
+        // called  from BoardManager.SwitchTurn() 
+        public void RemoveBuffFromAllies()
+        {
+            if (currentlyBuffedAllies != null)
+            {
+                foreach (Piece ally in currentlyBuffedAllies)
+                {
+                   
+                    ally.Attack.ModifyBy(-2);
+                }
+            }
+            currentlyBuffedAllies.Clear();
+        }
+
+        private void ApplyBuffToNearbyAllies()
+        {
+            int buffRange = 1;
+            int buffAmount = 2;
+
+            for (int dx = -buffRange; dx <= buffRange; dx++)
+            {
+                for (int dy = -buffRange; dy <= buffRange; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+                    int tx = X + dx;
+                    int ty = Y + dy;
+                    Vector2Int pos = new(tx, ty);
+                    if (!BoardManager.Instance.IsInBounds(pos)) continue;
+
+                    if (BoardManager.Instance.TryGetOccupant(
+                            BoardManager.Instance.tiles[pos],
+                            out Piece occupant))
+                    {
+                        if (occupant != null && occupant.color == this.color)
+                        {
+                            occupant.Attack.ModifyBy(buffAmount);
+                            currentlyBuffedAllies.Add(occupant);
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }

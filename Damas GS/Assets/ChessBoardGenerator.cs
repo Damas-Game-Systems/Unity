@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Damas
 {
-    public class ChessBoardGenerator : MonoBehaviour
+    public class ChessBoardGenerator : Singleton<ChessBoardGenerator>
     {
         [Header("Board Dimensions")]
         public int columns = 8;
@@ -33,6 +33,7 @@ namespace Damas
 
         private Dictionary<Vector2Int, Tile> tilesAtPositions = new();
         private Dictionary<Vector2Int, Piece> piecesAtPositions = new();
+        
 
         private void Start()
         {
@@ -53,7 +54,7 @@ namespace Damas
                 return;
             }
 
-            // Create 8×8 tiles
+            // Create 8ï¿½8 tiles
             for (int y = 0; y < rows; y++)
             {
                 for (int x = 0; x < columns; x++)
@@ -75,6 +76,7 @@ namespace Damas
                     tile.OnSpawn(boardPos);
 
                     // Add tile to dictionary
+                    Debug.Log($"Adding tile {boardPos} to dictionary");
                     tilesAtPositions[boardPos] = tile;
 
                     // Add an empty key to the pieces dictionary.
@@ -116,6 +118,8 @@ namespace Damas
             // Row 6 (Black pawns)
             for (int col = 0; col < 8; col++)
                 SpawnPiece(blackPawnPrefab, col, 6);
+            
+            
         }
 
         private void SpawnPiece(GameObject prefab, int x, int y)

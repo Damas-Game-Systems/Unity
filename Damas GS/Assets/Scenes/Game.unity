@@ -227,21 +227,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b02952e0ecd7aa64fb8c76e8c1c72cb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  dontDestroyOnLoad: 0
   columns: 8
   rows: 8
   tilePrefab: {fileID: 8701496222182921568, guid: 5516e65706ca30e479306a5c08d21a83, type: 3}
   lightColor: {r: 0.3962264, g: 0.3962264, b: 0.3962264, a: 1}
   darkColor: {r: 0.10898005, g: 0.2924528, b: 0.24091554, a: 1}
   whitePawnPrefab: {fileID: 4440166648968000157, guid: 0c869d99b8198c3469dabaa12453fd2a, type: 3}
-  whiteRookPrefab: {fileID: 6422222606439458086, guid: ca5544e139ab3174daec0bb56fe915e4, type: 3}
+  whiteRookPrefab: {fileID: 7543113456995801209, guid: efb2fb9ee205a67468a65059cbbdc488, type: 3}
   whiteKnightPrefab: {fileID: 72840549797589148, guid: 1fb09158a5cdfb746acd462fb348c07a, type: 3}
-  whiteBishopPrefab: {fileID: 7543113456995801209, guid: efb2fb9ee205a67468a65059cbbdc488, type: 3}
+  whiteBishopPrefab: {fileID: 6422222606439458086, guid: ca5544e139ab3174daec0bb56fe915e4, type: 3}
   whiteQueenPrefab: {fileID: 1004514267530307606, guid: 44d70e5f4b44b704a9e8bd6cc301c982, type: 3}
   whiteKingPrefab: {fileID: 7952402192789018693, guid: 19c20c53713d7e04285c0143ced74935, type: 3}
   blackPawnPrefab: {fileID: 801680108539058500, guid: 00a5aa47ada5f8c4fbf67b1d0091622d, type: 3}
-  blackRookPrefab: {fileID: 4865255115910454226, guid: 781382496970d1e4caf829785874aaa1, type: 3}
+  blackRookPrefab: {fileID: 4865255115910454226, guid: 8f16c93d84f619540a94cc2b78a92b2e, type: 3}
   blackKnightPrefab: {fileID: 4527818454402372619, guid: a29d9e979de5a724f98ad5384ec018c4, type: 3}
-  blackBishopPrefab: {fileID: 6446129275631970701, guid: 8f16c93d84f619540a94cc2b78a92b2e, type: 3}
+  blackBishopPrefab: {fileID: 6446129275631970701, guid: 781382496970d1e4caf829785874aaa1, type: 3}
   blackQueenPrefab: {fileID: 8503511771402253824, guid: 010eaa19ff9ebb74ea8edb1c3fb7a015, type: 3}
   blackKingPrefab: {fileID: 4007910624560564020, guid: 03f5896069fb1d54a953b2c9b39b6fa2, type: 3}
 --- !u!4 &699644581
@@ -271,13 +272,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53f213de0bb380f4f84fe6fb8424e41f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dontDestroyOnLoad: 0
+  dontDestroyOnLoad: 1
   log:
     show: 1
   currentPlayerColor: 0
   width: 0
   height: 0
   selectedPiece: {fileID: 0}
+  Initialized: 0
 --- !u!1 &926419764
 GameObject:
   m_ObjectHideFlags: 0

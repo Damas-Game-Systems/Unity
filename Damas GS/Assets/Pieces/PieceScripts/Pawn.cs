@@ -5,9 +5,12 @@ using UnityEngine;
 
 namespace Damas
 {
+    /// <summary>
+    /// Ability: Counterattack when killed
+    /// </summary>
     public class Pawn : Piece
     {
-        public override List<Vector2Int> GetValidMoves()
+        public override List<Vector2Int> GetValidMovesInternal()
         {
             List<Vector2Int> moves = new();
             int direction = color == PieceColor.White ? +1 : -1;
@@ -40,6 +43,17 @@ namespace Damas
             }
 
             return moves;
+        }
+
+        public override void OnCapture(Piece killer)
+        {
+            if (killer != null)
+            {
+                killer.Health.ReceiveDamage(this.Attack.CurrentValue);
+                
+            }
+            base.OnCapture(killer);
+           
         }
 
     }
