@@ -6,7 +6,7 @@ namespace Damas
 {
     public class Knight : Piece
     {
-        public override List<Vector2Int> GetValidMovesInternal()
+        protected override List<Vector2Int> GetValidMovesInternal()
         {
             List<Vector2Int> moves = new();
             int[] dx = { +2, +2, -2, -2, +1, +1, -1, -1 };

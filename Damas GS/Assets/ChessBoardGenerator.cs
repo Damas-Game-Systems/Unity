@@ -1,11 +1,16 @@
 using Damas.UI;
+using Damas.Utils;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Damas
 {
     public class ChessBoardGenerator : Singleton<ChessBoardGenerator>
     {
+        [SerializeField] dbug log;
+
         [Header("Board Dimensions")]
         public int columns = 8;
         public int rows = 8;
@@ -39,18 +44,14 @@ namespace Damas
         {
             GenerateBoard();
             PlaceAllPieces();
-            BoardManager.Instance.Initialize(
-                columns,
-                rows,
-                tilesAtPositions,
-                piecesAtPositions);
+            BoardManager.Instance.Initialize(tilesAtPositions, piecesAtPositions);
         }
 
         private void GenerateBoard()
         {
             if (tilePrefab == null)
             {
-                Debug.LogError("Assign the tile prefab");
+                log.error("Assign the tile prefab");
                 return;
             }
 
@@ -73,22 +74,31 @@ namespace Damas
                     tile.defaultColor = isDark ? darkColor : lightColor;
                     tile.GetComponent<SpriteRenderer>().color = tile.defaultColor;
 
-                    tile.OnSpawn(boardPos);
-
                     // Add tile to dictionary
-                    Debug.Log($"Adding tile {boardPos} to dictionary");
-                    tilesAtPositions[boardPos] = tile;
+                    log.print($"Adding tile {boardPos} to dictionary");
+                    
+                    Assert.IsNotNull(tilesAtPositions);
+                    Assert.IsNotNull(tile.gameObject);
 
+                    tilesAtPositions[boardPos] = tile;
+                    tilesAtPositions[boardPos].OnSpawn(boardPos);
+
+                    Assert.IsTrue(tilesAtPositions.ContainsValue(tile));
                     // Add an empty key to the pieces dictionary.
                     // This way, we can still use it like an array,
                     // but with added lookup fns
-                    piecesAtPositions[boardPos] = default;
+                    piecesAtPositions[boardPos] = null;
                 }
             }
         }
 
         private void PlaceAllPieces()
         {
+            Assert.IsNotNull(tilesAtPositions);
+            Assert.IsTrue(tilesAtPositions.Count == 64);
+
+            Assert.IsTrue( tilesAtPositions.Values.Where(tile => tile != null).ToList().Count == 64 );
+            Assert.IsTrue( piecesAtPositions.Values.Where(tile => tile == null).ToList().Count == 64 );
             // --- White Pieces ---
             // Row 0
             SpawnPiece(whiteRookPrefab, 0, 0);
@@ -118,15 +128,20 @@ namespace Damas
             // Row 6 (Black pawns)
             for (int col = 0; col < 8; col++)
                 SpawnPiece(blackPawnPrefab, col, 6);
-            
-            
         }
 
         private void SpawnPiece(GameObject prefab, int x, int y)
         {
+            Vector2Int boardPos = new Vector2Int(x, y);
+            Assert.IsNotNull(tilesAtPositions);
+
+            Assert.IsNotNull(tilesAtPositions[boardPos]);
+            Assert.IsTrue(tilesAtPositions[boardPos].BoardKey == boardPos);
+            tilesAtPositions[boardPos].OnSpawn(boardPos);
+
             if (prefab == null)
             {
-                Debug.LogWarning($"Missing prefab at location ({x},{y})");
+                log.error($"Missing prefab at location ({x},{y})");
                 return;
             }
 

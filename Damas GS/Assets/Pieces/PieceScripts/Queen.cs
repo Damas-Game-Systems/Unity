@@ -6,17 +6,17 @@ namespace Damas
 {
     public class Queen : Piece
     {
-        public override List<Vector2Int> GetValidMovesInternal()
+        protected override List<Vector2Int> GetValidMovesInternal()
         {
             List<Vector2Int> moves = new();
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, 0, +1));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, 0, -1));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, -1, 0));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, +1, 0));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, +1, +1));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, +1, -1));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, -1, +1));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, -1, -1));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(0, +1)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(0, -1)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(-1, 0)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(+1, 0)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(+1, +1)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(+1, -1)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(-1, +1)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(-1, -1)));
             return moves;
         }
         
@@ -34,7 +34,7 @@ namespace Damas
         {
             // Wait until the next turn. 
             yield return new UnityEngine.WaitUntil(() => 
-                BoardManager.Instance.currentPlayerColor == this.color
+                BoardManager.Instance.CurrentPlayerColor == this.color
             );
            
             if (enemy != null) enemy.IsLocked = false;

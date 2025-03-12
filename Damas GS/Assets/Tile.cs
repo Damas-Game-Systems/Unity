@@ -5,7 +5,7 @@ using UnityEngine.EventSystems; // <-- Add this namespace
 namespace Damas
 {
     [RequireComponent(typeof(SpriteRenderer))]
-    public class Tile : MonoBehaviour, IPointerDownHandler
+    public class Tile : MonoBehaviour, IPointerDownHandler, ISelectable
     {
         // Colors 
         public Color lightColor = Color.white;
@@ -17,6 +17,8 @@ namespace Damas
         [SerializeField] private GameObject occupiedTileOverlayPrefab;
         [SerializeField] private GameObject selectedTileOverlayPrefab;
 
+        [SerializeField, ReadOnly] private Piece previousOccupant;
+
         private GameObject overlay;
 
         private SpriteRenderer rend;
@@ -26,32 +28,29 @@ namespace Damas
 
         public int X { get { return boardX; } }
         public int Y { get { return boardY; } }
+        public Vector2Int BoardKey
+        {
+            get
+            {
+                return new (boardX, boardY);
+            }
+            private set
+            {
+                boardX = value.x;
+                boardY = value.y;
+            }
+        }
+
+        [field: ReadOnly] public Piece Occupant { get; private set; }
+        public bool IsEmpty => Occupant == null;
+
+        [field: ReadOnly] public bool IsSelected { get; private set; }
+
+
 
         private void Awake()
         {
             rend = GetComponent<SpriteRenderer>();
-        }
-
-        public void OnSpawn(Vector2Int spawnPos)
-        {
-            SetPositionData(spawnPos);
-        }
-
-        public Vector2Int GetPositionData()
-        {
-            return new Vector2Int(boardX, boardY);
-        }
-
-        public void SetPositionData(Vector2Int pos)
-        {
-            boardX = pos.x;
-            boardY = pos.y;
-        }
-
-        // Sets the tile’s color
-        public void SetHighlight(bool highlight)
-        {
-            rend.color = highlight ? highlightColor : defaultColor;
         }
 
         // This replaces OnMouseDown()
@@ -60,23 +59,45 @@ namespace Damas
             BoardManager.Instance.OnTileClicked(this);
         }
 
-        public void SetOverlay(bool hasPiece)
+        public void OnSpawn(Vector2Int spawnPos)
+        {
+            SetBoardKey(spawnPos);
+        }
+
+        public void SetBoardKey(Vector2Int pos)
+        {
+            BoardKey = pos;
+        }
+
+        public void AddPiece(Piece piece)
+        {
+            previousOccupant = Occupant;
+            Occupant = piece;
+        }
+
+        public void RemovePiece()
+        {
+            Occupant?.Deselect();
+            Occupant = null;
+        }
+
+
+        public void SetOverlay()
         {
             ClearOverlay();
 
-            if (hasPiece)
+            if (IsSelected)
             {
-                overlay = Instantiate(occupiedTileOverlayPrefab, transform);
+                overlay = Instantiate(selectedTileOverlayPrefab, transform);
             }
-            else
+            else if (IsEmpty)
             {
                 overlay = Instantiate(emptyTileOverlayPrefab, transform);
             }
-        }
-
-        public void SetOverlaySelected()
-        {
-            overlay = Instantiate(selectedTileOverlayPrefab, transform);
+            else if (!Occupant.IsMyTurn)
+            {
+                overlay = Instantiate(occupiedTileOverlayPrefab, transform);
+            }
         }
 
         public void ClearOverlay()
@@ -86,6 +107,20 @@ namespace Damas
                 Destroy(overlay);
             }
             overlay = null;
+        }
+
+        public void Select()
+        {
+            IsSelected = true;
+            SetOverlay();
+            Occupant?.Select();
+        }
+
+        public void Deselect()
+        {
+            IsSelected = false;
+            ClearOverlay();
+            Occupant?.Deselect();
         }
     }
 }

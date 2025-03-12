@@ -144,8 +144,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   log:
-    show: 0
+    show: 1
   type: 5
   color: 0
   maxHealth: 8
   defaultAttack: 1
+  buffDistance: {x: 2, y: 2}
+  buffAmount: 1
+  buffSelf: 1

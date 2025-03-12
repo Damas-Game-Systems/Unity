@@ -149,3 +149,6 @@ MonoBehaviour:
   color: 1
   maxHealth: 8
   defaultAttack: 1
+  buffDistance: {x: 2, y: 2}
+  buffAmount: 1
+  buffSelf: 1

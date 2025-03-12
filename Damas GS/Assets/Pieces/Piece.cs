@@ -34,14 +34,28 @@ namespace Damas
 
         public int X => boardX;
         public int Y => boardY;
-        public Vector2Int BoardKey => new(X, Y);
+        public Vector2Int BoardKey
+        {
+            get
+            {
+                return new(boardX, boardY);
+            }
+            private set
+            {
+                boardX = value.x;
+                boardY = value.y;
+            }
+        }
 
         [field: ReadOnly] public bool IsRegistered { get; private set; }
         [field: ReadOnly] public bool HasMoved { get; private set; }
+        public bool IsMyTurn => BoardManager.Instance.CurrentPlayerColor == color;
         [field: ReadOnly] public bool IsSelected { get; private set; }
         [field: ReadOnly] public PieceInfoWindow InfoWindow { get; private set; }
 
         public float OffsetY => sRenderer.sprite.bounds.extents.y;
+
+        protected int ForwardDir => color == PieceColor.White ? 1 : -1;
 
 
         public event System.Action<Piece> BeenCaptured;
@@ -53,7 +67,7 @@ namespace Damas
 
         private void OnEnable()
         {
-            Subscribe();
+            SubscribeOnEnable();
         }
 
 
@@ -71,45 +85,57 @@ namespace Damas
 
         public virtual void OnSpawn(Vector2Int spawnCoords)
         {
-            MoveTo(spawnCoords);
+            WaitThenDo waitForBoard = new(
+                this,
+                () => BoardManager.Instance.Initialized,
+                () => MoveTo(spawnCoords),
+                5f,
+                () => { }
+            );
 
+            waitForBoard.Start();
             Health = new(maxHealth);
             Attack = new(defaultAttack);
-            Debug.Log($"OnSpawn Called for {this.name} at {spawnCoords}");
+            log.print($"OnSpawn Called for {name} at {spawnCoords}");
             HasMoved = false;
         }
 
-        public Vector2Int GetPositionData()
+        public void SetBoardKey(Vector2Int pos)
         {
-            return new(boardX, boardY);
-        }
-
-        public void SetBoardIndex(Vector2Int pos)
-        {
-            boardX = pos.x; boardY = pos.y;
+            BoardKey = pos;
         }
 
         public void MoveTo(Vector2Int newPos)
         {
-            string errorMsg = "";
+            string msg = "";
 
             if (IsRegistered)
             {
-                BoardManager.Instance.DeregisterPiece(this, out errorMsg);
+                BoardManager.Instance.GetTile(this).ClearOverlay();
+                BoardManager.Instance.OverlaysOff(GetValidMoves());
+                if (!BoardManager.Instance.DeregisterPiece(this, out msg))
+                {
+                    log.error(msg);
+                }
                 
                 HasMoved = true;
             }
 
-            SetBoardIndex(newPos);
+            SetBoardKey(newPos);
 
-            if (!BoardManager.Instance.RegisterPiece(this, out errorMsg))
+            if (!BoardManager.Instance.RegisterPiece(this, out msg))
             {
-                log.error(errorMsg);
+                log.error(msg);
                 return;
+            }
+            else if (msg.Length > 0)
+            {
+                log.print(msg);
             }
 
             IsRegistered = true;
             transform.position = new Vector2(newPos.x, newPos.y - OffsetY);
+
             if (BoardManager.Instance.Initialized)
             {
                 OnAfterMove();
@@ -138,10 +164,15 @@ namespace Damas
             return GetValidMovesInternal();
         }
 
-        public abstract List<Vector2Int> GetValidMovesInternal();
-        public void Select()
+
+        public virtual void Select()
         {
             IsSelected = true;
+
+            if (IsMyTurn)
+            {
+                BoardManager.Instance.OverlaysOn(GetValidMoves());
+            }
 
             PieceInfoWindowData windowData = new(
                 Camera.main,
@@ -152,10 +183,9 @@ namespace Damas
             UiManager.Instance.PieceInfoUI.RequestOpenWindow(windowData);
         }
 
-        public void Deselect()
+        public virtual void Deselect()
         {
             IsSelected = false;
-
 
             if (InfoWindow != null)
             {
@@ -163,12 +193,14 @@ namespace Damas
             }
         }
 
-        private void Subscribe()
+        protected abstract List<Vector2Int> GetValidMovesInternal();
+
+        private void SubscribeOnEnable()
         {
             UiManager.Instance.PieceInfoUI.WindowOpened += HandlePieceWindowOpened;
         }
 
-        private void Unsubscribe()
+        private void UnsubscribeOnDisable()
         {
             UiManager.Instance.PieceInfoUI.WindowOpened -= HandlePieceWindowOpened;
         }
@@ -183,7 +215,7 @@ namespace Damas
 
         private void OnDisable()
         {
-            Unsubscribe();
+            UnsubscribeOnDisable();
         }
     } 
 }

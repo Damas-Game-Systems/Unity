@@ -144,7 +144,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   log:
-    show: 0
+    show: 1
   type: 4
   color: 0
   maxHealth: 10

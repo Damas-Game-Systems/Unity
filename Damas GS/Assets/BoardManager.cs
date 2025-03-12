@@ -1,7 +1,10 @@
 ﻿using Damas.Combat;
 using Damas.Utils;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
+using UnityEngine.Assertions;
+using System.Linq;
 
 namespace Damas
 {
@@ -9,34 +12,33 @@ namespace Damas
     {
         [SerializeField] dbug log;
 
+        public bool Initialized { get; private set; } = false;
+
+        // Currently selected tile
+        [field: SerializeField, ReadOnly] public Tile SelectedTile { get; private set; }
+        // Currently selected piece
+        public Piece SelectedPiece => SelectedTile?.Occupant;
+
+        // Currently selected tile
+        //[field: SerializeField, ReadOnly] public Tile TargetedTile { get; private set; }
+        // Currently selected piece
+        //[field: SerializeField, ReadOnly] public Piece TargetedPiece => TargetedTile.Occupant;
+
         //Keep track of whose turn it is 
-        [SerializeField] public PieceColor currentPlayerColor = PieceColor.White;
+        [field: SerializeField, ReadOnly] public PieceColor CurrentPlayerColor { get; private set; } = PieceColor.White;
 
-        [SerializeField] private int width;
-        [SerializeField] private int height;
-
+        
         public Dictionary<Vector2Int, Piece> pieces = new();
         public Dictionary<Vector2Int, Tile> tiles = new();
 
-        // Currently selected piece
-        [SerializeField]private Piece selectedPiece = null;
-        
-        public bool Initialized = false;
-
-        // // The list of valid squares for the selected piece
-        // private List<Vector2Int> validMoves
-        // {
-        //     get
-        //     {
-        //         return selectedPiece != null
-        //             ? GetValidMoves(selectedPiece)
-        //             : new ();
-        //     }
-        // }
+        static int registeredPieces = 0;
 
         private void Update()
         {
-            log.warn($"Selected Piece: {selectedPiece}");
+            string selectionMsg = SelectedPiece != null
+                ? $"Selected Piece: {SelectedPiece.name}"
+                : $"No piece selected";
+            log.warn(selectionMsg);
         }
 
         /// <summary>
@@ -46,247 +48,325 @@ namespace Damas
         /// to the manager. 
         /// </summary>
         public void Initialize(
-            int width,
-            int height,
             Dictionary<Vector2Int, Tile> tiles,
             Dictionary<Vector2Int, Piece> pieces)
         {
-            this.width = width;
-            this.height = height;
-            this.tiles = tiles;
-            this.pieces = pieces;
+            this.tiles = new(tiles);
+            this.pieces = new(pieces);
             Initialized = true;
         }
 
-        public bool RegisterPiece(Piece piece, out string error)
+        public bool IsValidKey(Vector2Int key)
         {
-            error = "";
+            return tiles.ContainsKey(key);
+        }
 
-            Vector2Int key = piece.GetPositionData();
+        public bool IsEmptyAt(Vector2Int key)
+        {
+            return !TryGetPiece(key, out Piece piece);
+        }
 
-            if (!pieces.ContainsKey(key))
+        public bool IsOpponentAt(Vector2Int key, Piece opponentOf)
+        {
+            return TryGetPiece(key, out Piece piece)
+                && piece.color != opponentOf.color;
+        }
+
+        public bool RegisterPiece(Piece piece, out string msg)
+        {
+            msg = "";
+
+            Vector2Int key = piece.BoardKey;
+
+            Assert.IsNotNull(tiles);
+            Assert.IsNotNull(pieces);
+            Assert.IsTrue(tiles.Count == pieces.Count);
+            Assert.IsTrue(tiles.ContainsKey(key));
+            Assert.IsNotNull(piece);
+
+            if (pieces[key] != null && pieces[key] != piece)
             {
-                error =
-                    $"Initializing key at  {key}.";
-
-                pieces[key] = piece;
-                return true;
-            }
-            else if (pieces[key] != null && pieces[key] != piece)
-            {
-                error =
+                msg =
                     $"Couldn't register {piece.name} at {key}." +
                     $"{pieces[key].name} was already registered here.";
                 return false;
             }
 
             // Register the new piece in the pieces dictionary
-            piece.BeenCaptured += HandleCapture;
             pieces[key] = piece;
+            pieces[key].BeenCaptured += HandleCapture;
+            tiles[key].AddPiece(pieces[key]);
+            registeredPieces++;
             return true;
         }
 
-        public bool DeregisterPiece(Piece piece, out string error)
+        public bool DeregisterPiece(Piece piece, out string msg)
         {
-            error = "";
+            msg = "";
 
-            Vector2Int key = piece.GetPositionData();
+            Vector2Int key = piece.BoardKey;
 
             if (!pieces.ContainsKey(key))
             {
-                error =
+                msg =
                     $"Couldn't deregister {piece.name} at {key}." +
                     $"no key at {key}";
                 return false;
             }
             else if (pieces[key] != piece)
             {
-                error =
+                msg =
                     $"Couldn't deregister {piece.name} at {key}." +
                     $"{piece.name} is not registered to {key}";
                 return false;
             }
 
             // Deregister the new piece from the pieces dictionary
-            piece.BeenCaptured -= HandleCapture;
+            pieces[key].BeenCaptured -= HandleCapture;
             pieces[key] = null;
+            tiles[key].RemovePiece();
             return true;
         }
 
-        public void OnPieceClicked(Piece clickedPiece)
+        public void OnTileClicked(Tile clickedTile)
         {
-            SetOverlaysOnValidMoves(false);
-
-            if (selectedPiece == null)
+            if (SelectedTile == null)
             {
-                if (clickedPiece.color == currentPlayerColor)
+                // turn owner's piece
+                if (clickedTile.Occupant.color == CurrentPlayerColor)
                 {
-                    SelectPiece(clickedPiece);
+                    SelectedTile = clickedTile;
+                    SelectedTile.Select();
                 }
-                else
+                else // opponent piece
                 {
-                    DisplayPieceInfo(clickedPiece);
+                    // display info
                 }
             }
-            else if (clickedPiece == selectedPiece)
+            else if (clickedTile == SelectedTile)
             {
-                DeselectPiece();
+                SelectedTile.Deselect();
+                SelectedTile = null;
+
+                // targetedTile.StopTargeting()
+                // TargetedTile = null;
             }
-            else if (clickedPiece.color == selectedPiece.color)
+            else if (SelectedPiece != null
+                && SelectedPiece.GetValidMoves().Contains(clickedTile.BoardKey))
             {
-                DeselectPiece();
-                SelectPiece(clickedPiece);
-            }
-            else
-            {
-                /// TODO:
-                /// Create an AttackCommand
-                /// - if the command would kill the piece,
-                ///   - issue the command.
-                ///   - capture target to attacker.
-                ///   - move attacker to tile.
-                /// - if not,
-                ///   - issue the command
-                ///
-
-                List<Vector2Int> validMoves = selectedPiece.GetValidMoves();
-                Vector2Int enemyPos = clickedPiece.GetPositionData();
-
-                if (!validMoves.Contains(enemyPos))
+                if (clickedTile.Occupant == null)
                 {
-                    log.warn("Invalid capture: Enemy is not in range.");
-                    return;
-                }
-
-                // If tile is valid, perform the attack
-                AttackCommand command = new(selectedPiece, clickedPiece);
-                if (command.WouldKill())
-                {
-                    command.Execute();
-                }
-                else
-                {
-                    command.Execute();
+                    MovePiece(SelectedPiece, clickedTile.BoardKey);
                     SwitchTurn();
                 }
-            }
+                else if (clickedTile.Occupant.color == SelectedPiece.color)
+                {
+                    SelectedTile.Deselect();
+                    SelectedTile = clickedTile;
+                    SelectedTile.Select();
+                }
+                else
+                {
+                    //List<Vector2Int> validMoves = SelectedPiece.GetValidMoves();
+                    //Vector2Int enemyPos = clickedPiece.BoardKey;
 
-        }
+                    //if (!validMoves.Contains(enemyPos))
+                    //{
+                    //    log.warn("Invalid capture: Enemy is not in range.");
+                    //    return;
+                    //}
 
-        public void OnTileClicked(Tile tile)
-        {
-            Vector2Int tilePos = tile.GetPositionData();
+                    /// Create an AttackCommand
+                    /// - if the command would kill the piece,
+                    ///   - issue the command.
+                    ///   - capture target to attacker.
+                    ///   - move attacker to tile.
+                    /// - if not,
+                    ///   - issue the command
+                    ///
+                    // If tile is valid, perform the attack
+                    AttackCommand command = new(SelectedPiece, clickedTile.Occupant);
+                    if (command.WouldKill())
+                    {
+                        command.Execute();
+                    }
+                    else
+                    {
+                        command.Execute();
+                        SwitchTurn();
+                    }
 
-            if (TryGetOccupant(tile, out Piece clickedPiece))
-            {
-                log.print($"{tile.gameObject.name} had an occupant: {clickedPiece.gameObject}");
-                OnPieceClicked(clickedPiece);
-            }
-            else if (selectedPiece != null && selectedPiece.GetValidMoves().Contains(tilePos))
-            {
-                MovePiece(selectedPiece, tilePos);
-                SwitchTurn();
-            }
+                    // TargetedTile = clickedTile;
+                    // clickedTile.StartTargeting();
+
+                    // hmm hmm mobile game... hmmmm...
+                    // big dumb red fire button appears?? :)
+                }
+            }          
             else
             {
                 /// TODO:
                 /// Indicate that it was an invalid move attempt?
             }
+        }
 
-            //if (selectedPiece == null)
+        //public void OnPieceClicked(Piece clickedPiece)
+        //{
+        //    SetOverlaysOnValidMoves(false);
+
+        //    if (SelectedPiece == null)
+        //    {
+        //        if (clickedPiece.color == CurrentPlayerColor)
+        //        {
+        //            SelectPiece(clickedPiece);
+        //        }
+        //        else
+        //        {
+        //            TargetPiece(clickedPiece);
+        //        }
+        //    }
+        //    else if (clickedPiece == SelectedPiece)
+        //    {
+        //        DeselectPiece();
+        //    }
+        //    else if (clickedPiece.color == SelectedPiece.color)
+        //    {
+        //        DeselectPiece();
+        //        SelectPiece(clickedPiece);
+        //    }
+        //    else
+        //    {
+        //    }
+        //}
+
+
+        public bool TryGetTile(Vector2Int boardKey, out Tile tile)
+        {
+            if (!IsValidKey(boardKey))
+            {
+                log.warn(
+                    $"Either you are trying to access a tile at " +
+                    $"an invalid position, or there was an error " +
+                    $"during board generation.");
+
+                tile = null;
+                return false;
+            }
+            else
+            {
+                Assert.IsNotNull(
+                    tiles[boardKey],
+                    $"{boardKey} is a valid BoardKey, but the tile there was" +
+                    $"NULL. This probably means that there was an error " +
+                    $"during board generation. ");
+
+                tile = tiles[boardKey];
+                return true;
+            }
+        }
+
+        public bool TryGetPiece(Vector2Int boardKey, out Piece piece)
+        {
+            if (!IsValidKey(boardKey))
+            {
+                log.warn(
+                    $"Either you are trying to access a piece at " +
+                    $"an invalid tile position, or there was an error " +
+                    $"during board generation.");
+
+                piece = null;
+                return false;
+            }
+            else if (pieces[boardKey] == null)
+            {
+                // Empty
+                piece = null;
+                return false;
+            }
+            else
+            {
+                // Occupied
+                piece = pieces[boardKey];
+                return true;
+            }
+        }
+
+        public Tile GetTile(Piece piece)
+        {
+            Assert.IsTrue(
+                IsValidKey(piece.BoardKey),
+                $"{piece.BoardKey}'s BoardKey is invalid. Did you accidentally " +
+                $"pass in a prefab?");
+
+            Assert.IsNotNull(
+                pieces[piece.BoardKey],
+                $"{piece.BoardKey} is a valid BoardKey, but the piece there was" +
+                $"NULL. This probably means that there was an error " +
+                $"during board generation. ");
+
+            Assert.IsTrue(
+                pieces[piece.BoardKey] == piece,
+                $"{pieces[piece.BoardKey]} was found at" +
+                $"{piece.name}'s BoardKey ({piece.BoardKey}). Ensure that " +
+                $"`Piece.SetBoardIndex(Vector2Int)` or `Piece.BoardKey = n` " +
+                $"are only ever called once, during board generation.");
+
+            return tiles[piece.BoardKey];
+        }
+
+        public Piece GetOccupant(Tile tile)
+        {
+            Assert.IsTrue(
+                IsValidKey(tile.BoardKey),
+                $"{tile.BoardKey}'s BoardKey is invalid. Did you accidentally " +
+                $"pass in a prefab?");
+
+            Assert.IsNotNull(
+                tiles[tile.BoardKey],
+                $"{tile.BoardKey} is a valid BoardKey, but the tile there was" +
+                $"NULL. This probably means that there was an error " +
+                $"during board generation. ");
+
+            Assert.IsTrue(
+                tiles[tile.BoardKey] == tile,
+                $"{tiles[tile.BoardKey]} was found at" +
+                $"{tile.name}'s BoardKey ({tile.BoardKey}). Ensure that " +
+                $"`Tile.SetBoardIndex(Vector2Int)` or `Tile.BoardKey = n` " +
+                $"are only ever called once, during board generation.");
+
+            // If the way this operates is that we fill up the
+            // pieces dictionary with a key at every position on the board,
+            // with the keys where the tile has no occupant are null,
+            // we check this way:
+            Assert.IsTrue(
+                pieces.ContainsKey(tile.BoardKey),
+                $"The pieces dictionary is missing a key at {tile.BoardKey}. " +
+                $"There should be a piece entry in the pieces dictionary at " +
+                $"every position on the board." +
+                $"Ensure that none are getting removed at any point.");
+
+            return pieces[tile.BoardKey];
+
+            // It's possible the above way is a lil janky? But idk.
+            // If we switch to adding and removing pieces to the dictionary
+            // whenever a piece is moved, then use this:
+            //if (!pieces.ContainsKey(tile.BoardKey))
             //{
-            //    if (pieces.TryGetValue(tilePos, out Piece piece))
-            //    {
-            //        if (piece != null)
-            //        {
-            //            OnPieceClicked(piece);
-            //            return;
-            //        }
-            //    }
+            //    // No occupant
+            //    return null;
             //}
-            //else
-            //{
-            //    // If the tile is in the valid moves list
-            //    if (validMoves.Contains(tilePos))
-            //    {
-            //        Piece occupant = pieces[tilePos];
 
-            //        if (occupant != null)
-            //        {
+            //Assert.IsNotNull(
+            //    pieces[tile.BoardKey],
+            //    $"The pieces dictionary on {name} contained a null element. " +
+            //    $"Ensure pieces are removed at the point that a piece moves" +
+            //    $"or is captured.");
 
-            //        }
-            //        else
-            //        {
-
-            //        }
-            //    }
-            //    else
-            //    {
-
-            //    }
-
-            //    //// Clear selection
-            //    //DeselectPiece();
-            //}
+            //return pieces[tile.BoardKey];
         }
 
-        public bool TryGetOccupant(Tile tile, out Piece occupant)
-        {
-            Vector2Int tilePos = tile.GetPositionData();
-
-            if (!tiles.TryGetValue(tilePos, out Tile foundTile))
-            {
-                occupant = null;
-                return false;
-            }
-
-            if (tile != foundTile)
-            {
-                Debug.LogError("Tile map is fucked");
-                occupant = null;
-                return false;
-            }
-
-            if (!pieces.TryGetValue(tilePos, out occupant))
-            {
-                return false;
-            }
-
-            return occupant != null;
-        }
-
-        private void SelectPiece(Piece piece)
-        {
-            log.print($"Selecting {piece.gameObject.name}");
-
-            selectedPiece = piece;
-            selectedPiece?.Select();
-
-
-            tiles[selectedPiece.BoardKey].SetOverlaySelected();
-            SetOverlaysOnValidMoves(true);
-        }
-
-        private void DeselectPiece()
-        {
-            log.print($"Deselecting piece: {selectedPiece}");
-
-            selectedPiece?.Deselect();
-
-            tiles[selectedPiece.BoardKey].ClearOverlay();
-            selectedPiece = null;
-        }
-
-        private void DisplayPieceInfo(Piece piece)
-        {
-            /// TODO
-        }
-
-        // Move a piece to (targetX, targetY), capture logic here
         public void MovePiece(Piece piece, Vector2Int targetPos)
         {
-            tiles[selectedPiece.BoardKey].ClearOverlay();
-            SetOverlaysOnValidMoves(false);
             piece.MoveTo(targetPos);
         }
 
@@ -307,140 +387,84 @@ namespace Damas
         /// Moves in a straight line until blocked or off-board.
         /// For Rooks/Bishops/Queens. kept this here for now might get moved to piece class - lee
         /// </summary>
-        public List<Vector2Int> GetMovesInDirection(Piece piece, int dx, int dy)
+        public List<Vector2Int> GetMovesInDirection(Piece piece, Vector2Int direction)
         {
-            var moves = new List<Vector2Int>();
-            int x = piece.X;
-            int y = piece.Y;
+            List<Vector2Int> moves = new();
+            Vector2Int keyToCheck = direction;
 
-            while (true)
+            while (IsValidMove(piece, keyToCheck))
             {
-                x += dx;
-                y += dy;
-                if (!IsInBounds(x, y)) break; // off-board => stop
-
-                Piece occupant = pieces[new(y, x)];
-                if (occupant == null)
-                {
-                    // empty => can move
-                    moves.Add(new Vector2Int(x, y));
-                }
-                else
-                {
-
-                    if (occupant.color != piece.color)
-                        moves.Add(new Vector2Int(x, y));
-
-                    break;
-                }
+                moves.Add(keyToCheck);
+                keyToCheck += direction;
             }
+
             return moves;
         }
 
-        private void TurnOnHighlights()
-        {
-            // Highlight each tile in validMoves
-            foreach (Vector2Int pos in selectedPiece?.GetValidMoves() ?? new List<Vector2Int>())
-            {
-                if (tiles.TryGetValue(pos, out Tile t))
-                {
-                    t.SetHighlight(true);
-                }
-            }
-        }
-        private void TurnOffHighlights()
-        {
-            // Turn off highlights
-            foreach (Vector2Int pos in selectedPiece?.GetValidMoves() ?? new List<Vector2Int>())
-            {
-                if (tiles.TryGetValue(pos, out Tile t))
-                {
-                    t.SetHighlight(false);
-                }
-            }
-        }
-
-        private void SetOverlaysOnValidMoves(bool turnOn)
+        public void OverlaysOn(List<Vector2Int> moves)
         {
             log.print(
-                $"Setting overlays to {(turnOn ? "on" : "off")}." +
-                $"Valid moves count: {selectedPiece?.GetValidMoves().Count}");
+                $"Setting overlays ON. " +
+                $"Valid moves count: {moves.Count}");
 
-            foreach (Vector2Int pos in selectedPiece?.GetValidMoves() ?? new List<Vector2Int>())
+            foreach (Vector2Int pos in moves)
             {
                 if (!tiles.TryGetValue(pos, out Tile tile)) continue;
 
-                if (!turnOn)
-                {
-                    tile.ClearOverlay();
-                    continue;
-                }
-
-                tile.SetOverlay(pieces.ContainsKey(pos) && pieces[pos] != null);
+                tile.SetOverlay();
             }
         }
 
-        public bool IsInBounds(Vector2Int pos)
+        public void OverlaysOff(List<Vector2Int> moves)
         {
-            return IsInBounds(pos.x, pos.y);
-        }
+            log.print(
+                $"Setting overlays OFF. " +
+                $"Valid moves count: {moves.Count}");
 
-        private bool IsInBounds(int x, int y)
-        {
-            return x >= 0 && x < 8 && y >= 0 && y < 8;
+            foreach (Vector2Int pos in moves)
+            {
+                if (!tiles.TryGetValue(pos, out Tile tile)) continue;
+
+                tile.ClearOverlay();
+            }
         }
 
         private void SwitchTurn()
         {
-            DeselectPiece();
-            if (selectedPiece is King)
-            {
-                King king = selectedPiece as King;
-                king.RemoveBuffFromAllies();
-            }
-            currentPlayerColor = currentPlayerColor == PieceColor.White
+            SelectedTile?.Deselect();
+            // TargetedTile?.Deselect();
+            CurrentPlayerColor = CurrentPlayerColor == PieceColor.White
                 ? PieceColor.Black
                 : PieceColor.White;
         }
 
-        public bool IsTileEmpty(Vector2Int pos)
+        public bool IsValidMove(Piece piece, Vector2Int key)
         {
-            return pieces.ContainsKey(pos) && pieces[pos] == null;
-        }
-
-        public bool IsOpponentPiece(Piece piece, Vector2Int pos)
-        {
-            return pieces.TryGetValue(pos, out Piece target) && target != null && target.color != piece.color;
-        }
-
-        public bool IsValidMove(Piece piece, Vector2Int pos)
-        {
-            return IsTileEmpty(pos) || IsOpponentPiece(piece, pos);
+            return IsValidKey(key) && (!TryGetPiece(key, out Piece pieceToCheck)
+                || pieceToCheck?.color != piece.color);
         }
 
         private void HandleCapture(Piece piece)
         {
-            selectedPiece.Captures.Add(piece);
+            SelectedPiece.Captures.Add(piece);
 
-            if (currentPlayerColor == PieceColor.White)
+            if (CurrentPlayerColor == PieceColor.White)
             {
                 /// TODO:
                 /// Go to White's captured pieces
                 /// For now,
-                DestroyPieceAt(piece.GetPositionData());
+                DestroyPieceAt(piece.BoardKey);
             }
             else
             {
                 /// TODO:
                 /// Go to Black's captured pieces
                 /// For now,
-                DestroyPieceAt(piece.GetPositionData());
+                DestroyPieceAt(piece.BoardKey);
             }
 
-            MovePiece(selectedPiece, piece.GetPositionData());
+            MovePiece(SelectedPiece, piece.BoardKey);
             SwitchTurn();
         }
-
-
     }
 }

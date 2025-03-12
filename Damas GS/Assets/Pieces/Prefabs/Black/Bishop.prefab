@@ -149,3 +149,6 @@ MonoBehaviour:
   color: 1
   maxHealth: 5
   defaultAttack: 2
+  healRange: {x: 2, y: 2}
+  healAmount: 1
+  healsSelf: 0

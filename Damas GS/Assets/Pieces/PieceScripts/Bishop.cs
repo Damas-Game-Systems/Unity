@@ -9,14 +9,18 @@ namespace Damas
     /// </summary>
     public class Bishop : Piece
     {
+        [Header("Abilities")]
+        [SerializeField] private Vector2Int healRange;
+        [SerializeField] private int healAmount;
+        [SerializeField] private bool healsSelf;
         
-        public override List<Vector2Int> GetValidMovesInternal()
+        protected override List<Vector2Int> GetValidMovesInternal()
         {
             List<Vector2Int> moves = new();
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, +1, +1));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, +1, -1));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, -1, +1));
-            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, -1, -1));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(+1, +1)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(+1, -1)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(-1, +1)));
+            moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, new(-1, -1)));
             return moves;
         }
 
@@ -28,35 +32,21 @@ namespace Damas
 
         private void HealNearbyAllies()
         {
-            int healRange = 1;
-            int healAmount = 2;
-
-            for (int dx = -healRange; dx <= healRange; dx++)
+            for (int columnToCheck = -healRange.x; columnToCheck <= healRange.x; columnToCheck++)
             {
-                for (int dy = -healRange; dy <= healRange; dy++)
+                for (int rowToCheck = -healRange.y; rowToCheck <= healRange.y; rowToCheck++)
                 {
-                    if (dx == 0 && dy == 0)
-                    {
-                        continue;
-                    }
+                    Vector2Int posToCheckLocal = new(columnToCheck, rowToCheck);
+                    Vector2Int checkKey = BoardKey + posToCheckLocal;
 
-                    int tileX = X + dx;
-                    int tileY = Y + dy;
-                    Vector2Int pos = new Vector2Int(tileX, tileY);
+                    if (!healsSelf && posToCheckLocal == Vector2.zero) { continue; }
 
-                    if (!BoardManager.Instance.IsInBounds(pos))
-                    {
-                        continue;
-                    }
+                    if (!BoardManager.Instance.TryGetPiece(checkKey, out Piece occupant)) { continue; }
 
-                    if (BoardManager.Instance.TryGetOccupant(BoardManager.Instance.tiles[pos], out Piece occupant))
+                    if (occupant.color == this.color)
                     {
-                        if (occupant != null && occupant.color == this.color)
-                        {
-                            occupant.Health.ReceiveHeal(healAmount);
-                        }
+                        occupant.Health.ReceiveHeal(healAmount);
                     }
-                        
                 }
             }
         }

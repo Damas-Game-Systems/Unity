@@ -15,11 +15,11 @@ namespace Damas.Utils
         private int maxReportSize = 10;
 
         private Queue<string> messages;
-        private string report = "";
+        private string report => string.Join('\n', messages);
 
         public void print()
         {
-            print();
+            print(report);
         }
 
         public void print(string msg)
@@ -62,11 +62,6 @@ namespace Damas.Utils
             }
 
             messages.Enqueue(trim(msg));
-        }
-
-        private string generateReport()
-        {
-            return string.Join('\n', messages);
         }
 
         private string trim(string msg)
