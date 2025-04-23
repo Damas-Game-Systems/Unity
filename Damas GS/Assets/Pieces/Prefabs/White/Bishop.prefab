@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3220157934105766995}
   - component: {fileID: 3240094695648450520}
   - component: {fileID: 9127690082204998958}
-  - component: {fileID: 161042384404995126}
+  - component: {fileID: 4802095056969131313}
   m_Layer: 0
   m_Name: Bishop
   m_TagString: Untagged
@@ -131,7 +131,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.84375, y: 1.34375}
   m_EdgeRadius: 0
---- !u!114 &161042384404995126
+--- !u!114 &4802095056969131313
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -140,11 +140,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 6422222606439458086}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0c8aba4ffaf6cf94f9baf058bbcc37c1, type: 3}
+  m_Script: {fileID: 11500000, guid: f2352b6579080294693db9382a716ad3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   log:
-    show: 1
+    show: 0
   type: 3
   color: 0
   maxHealth: 5
