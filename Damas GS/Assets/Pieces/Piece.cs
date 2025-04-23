@@ -39,6 +39,8 @@ namespace Damas
         [field: ReadOnly] public bool IsRegistered { get; private set; }
         [field: ReadOnly] public bool HasMoved { get; private set; }
         [field: ReadOnly] public bool IsSelected { get; private set; }
+        
+        [field: SerializeField] public bool canMovePastPieces { get; protected set; } = false;
         [field: ReadOnly] public PieceInfoWindow InfoWindow { get; private set; }
 
         public float OffsetY => sRenderer.sprite.bounds.extents.y;

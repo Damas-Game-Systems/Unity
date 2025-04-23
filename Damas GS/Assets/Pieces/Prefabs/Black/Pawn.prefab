@@ -149,3 +149,4 @@ MonoBehaviour:
   color: 1
   maxHealth: 2
   defaultAttack: 1
+  <canMovePastPieces>k__BackingField: 1

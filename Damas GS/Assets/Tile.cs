@@ -48,7 +48,7 @@ namespace Damas
             boardY = pos.y;
         }
 
-        // Sets the tile’s color
+        // Sets the tileâ€™s color
         public void SetHighlight(bool highlight)
         {
             rend.color = highlight ? highlightColor : defaultColor;

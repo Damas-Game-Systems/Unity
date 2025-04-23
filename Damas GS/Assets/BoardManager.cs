@@ -309,6 +309,12 @@ namespace Damas
         /// </summary>
         public List<Vector2Int> GetMovesInDirection(Piece piece, int dx, int dy)
         {
+            if (piece == null)
+            {
+                Debug.LogError("GetMovesInDirection: The piece parameter is null.");
+                return new List<Vector2Int>();
+            }
+
             var moves = new List<Vector2Int>();
             int x = piece.X;
             int y = piece.Y;
@@ -317,26 +323,32 @@ namespace Damas
             {
                 x += dx;
                 y += dy;
-                if (!IsInBounds(x, y)) break; // off-board => stop
 
-                Piece occupant = pieces[new(y, x)];
-                if (occupant == null)
+                // Stop if out of bounds
+                if (!IsInBounds(x, y)) break;
+
+                Vector2Int position = new Vector2Int(x, y);
+
+                if (pieces.TryGetValue(position, out Piece occupant))
                 {
-                    // empty => can move
-                    moves.Add(new Vector2Int(x, y));
+                    if (occupant != null)
+                    {
+                        // Add as a valid move if it's an opponent piece
+                        if (occupant.color != piece.color)
+                        {
+                            moves.Add(position);
+                        }
+                        // Stop further movement if the piece cannot move past others
+                        break;
+                    }
                 }
-                else
-                {
 
-                    if (occupant.color != piece.color)
-                        moves.Add(new Vector2Int(x, y));
-
-                    break;
-                }
+                // Add empty square as a valid move
+                moves.Add(position);
             }
+
             return moves;
         }
-
         private void TurnOnHighlights()
         {
             // Highlight each tile in validMoves

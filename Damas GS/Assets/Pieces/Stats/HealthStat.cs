@@ -1,3 +1,5 @@
+using System;
+
 namespace Damas.Combat
 {
     /// Layla
@@ -6,11 +8,13 @@ namespace Damas.Combat
         private readonly int maxValue;
 
         private int currentValue;
+        public event Action OnHealthChanged;
 
         /// <summary>
         /// The current value of this stat.
         /// </summary>
         public int CurrentValue { get { return currentValue; } }
+        public int MaxValue { get { return maxValue; } }
 
         public HealthStat(int maxValue)
         {
@@ -35,6 +39,7 @@ namespace Damas.Combat
             {
                 currentValue = 0;
             }
+            OnHealthChanged?.Invoke();
         }
 
         public void ReceiveHeal(int amount)
@@ -45,6 +50,7 @@ namespace Damas.Combat
             {
                 currentValue = maxValue;
             }
+            OnHealthChanged?.Invoke();
         }
     }
 }
