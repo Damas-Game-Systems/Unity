@@ -152,6 +152,8 @@ namespace Damas
                     return;
                 }
                 HasMoved = true;
+                BoardManager.Instance.tiles[BoardKey]?.ClearOverlay();
+                BoardManager.Instance.SetOverlaysOnList(GetValidMoves(), false);
             }
 
             SetBoardIndex(newPos);
@@ -197,6 +199,9 @@ namespace Damas
         {
             IsSelected = true;
 
+            BoardManager.Instance.tiles[BoardKey].SetOverlaySelected();
+            BoardManager.Instance.SetOverlaysOnList(GetValidMoves(), true);
+            UiManager.Instance.CloseAllWindows();
             InfoWindow = UiManager.Instance.OpenWindow(this);
         }
 
@@ -204,6 +209,9 @@ namespace Damas
         {
             IsSelected = false;
 
+            BoardManager.Instance.tiles[BoardKey].ClearOverlay();
+            BoardManager.Instance.SetOverlaysOnList(GetValidMoves(), false);
+            UiManager.Instance.CloseAllWindows();
             UiManager.Instance.CloseWindow(InfoWindow);
         }
 

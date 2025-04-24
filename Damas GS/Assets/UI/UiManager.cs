@@ -27,11 +27,21 @@ namespace Damas.UI
             PieceInfoWindow newWindow = null;
             if (piece.color == PieceColor.White)
             {
-                newWindow = Instantiate(whitePieceWindowPrefab);
+                if (whitePieceWindow != null)
+                {
+                    CloseWindow(whitePieceWindow);
+                }
+                whitePieceWindow = Instantiate(whitePieceWindowPrefab);
+                newWindow = whitePieceWindow;
             }
             else if (piece.color == PieceColor.Black)
             {
-                newWindow = Instantiate(blackPieceWindowPrefab);
+                if (blackPieceWindow != null)
+                {
+                    CloseWindow(blackPieceWindow);
+                }
+                blackPieceWindow = Instantiate(blackPieceWindowPrefab);
+                newWindow = blackPieceWindow;
             }
             newWindow.Open(piece, duration);
             return newWindow;
@@ -39,7 +49,14 @@ namespace Damas.UI
 
         public void CloseWindow(PieceInfoWindow window)
         {
+            if (window == null) { return; }
             Destroy(window.gameObject);
+        }
+
+        public void CloseAllWindows()
+        {
+            CloseWindow(whitePieceWindow);
+            CloseWindow(blackPieceWindow);
         }
     }
 }
