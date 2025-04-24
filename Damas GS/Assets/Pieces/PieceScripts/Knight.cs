@@ -1,3 +1,4 @@
+using System;
 using Damas.UI;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +7,7 @@ namespace Damas
 {
     public class Knight : Piece
     {
+        private List<Piece> currentlyBuffedAllies = new();
         public override List<Vector2Int> GetValidMovesInternal()
         {
             List<Vector2Int> moves = new();
@@ -22,32 +24,61 @@ namespace Damas
             }
             return moves;
         }
-        
-        public static int ApplyKnightBodyguardIfInRange(Piece defender, int incomingDamage)
+
+        private void Start()
         {
-            int shareRange = 1; 
-          
-            foreach (var kvp in BoardManager.Instance.pieces)
+            ApplyBuffToNearbyAllies();
+        }
+
+        protected override void OnAfterMove()
+        {
+            base.OnAfterMove();
+            // Remove old buffs
+            RemoveBuffFromAllies();
+            ApplyBuffToNearbyAllies();
+        }
+        
+        
+        public void RemoveBuffFromAllies()
+        {
+            if (currentlyBuffedAllies != null)
             {
-                var piece = kvp.Value;
-                if (piece == null) continue;
-                if (piece is Knight knight && knight.color == defender.color)
+                foreach (Piece ally in currentlyBuffedAllies)
                 {
-                    // check range
-                    int dist = Mathf.Abs(knight.X - defender.X) + Mathf.Abs(knight.Y - defender.Y);
-                    if (dist <= shareRange)
+                  ally.KnightBodyguards.Remove(this);
+                }
+            }
+            currentlyBuffedAllies.Clear();
+        }
+
+        
+        public void ApplyBuffToNearbyAllies()
+        {
+            int buffRange = 1;
+            int buffAmount = 2;
+
+            for (int dx = -buffRange; dx <= buffRange; dx++)
+            {
+                for (int dy = -buffRange; dy <= buffRange; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+                    int tx = X + dx;
+                    int ty = Y + dy;
+                    Vector2Int pos = new(tx, ty);
+                    if (!BoardManager.Instance.IsInBounds(pos)) continue;
+
+                    if (BoardManager.Instance.TryGetOccupant(
+                            BoardManager.Instance.tiles[pos],
+                            out Piece occupant))
                     {
-                        
-                        int half = incomingDamage / 2;
-                        
-                        knight.Health.ReceiveDamage(half);
-                        
-                        return (incomingDamage - half);
+                        if (occupant != null && occupant.color == this.color)
+                        {
+                            currentlyBuffedAllies.Add(occupant);
+                            occupant.KnightBodyguards.Add(this);
+                        }
                     }
                 }
             }
-
-            return incomingDamage; 
         }
 
     }

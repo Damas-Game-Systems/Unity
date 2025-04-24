@@ -416,6 +416,16 @@ namespace Damas
                 King king = selectedPiece as King;
                 king.RemoveBuffFromAllies();
             }
+            if (selectedPiece is Knight)
+            {
+                Knight knight = selectedPiece as Knight;
+                knight.RemoveBuffFromAllies();
+            }
+            if (selectedPiece is Rook)
+            {
+                Rook rook = selectedPiece as Rook;
+                rook.RemoveBuffFromAllies();
+            }
             currentPlayerColor = currentPlayerColor == PieceColor.White
                 ? PieceColor.Black
                 : PieceColor.White;
