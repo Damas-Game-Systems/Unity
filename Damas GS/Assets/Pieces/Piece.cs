@@ -29,7 +29,7 @@ namespace Damas
         public HealthStat Health { get; private set; }
         public AttackStat Attack { get; private set; }
         public List<Piece> Captures { get; private set; } = new();
-        public bool IsLocked { get; set; } = false;
+        public bool IsLocked = false;
 
         // Current position on the board
         private int boardX;
@@ -45,6 +45,8 @@ namespace Damas
         [field: ReadOnly] public bool IsSelected { get; private set; }
 
         [field: ReadOnly] public bool HasRookBodyguard;
+        [field: ReadOnly] public bool HasKnightBodyguard => KnightBodyguards.Count > 0;
+        [field: ReadOnly] public bool HasKingBuff;
         [field: ReadOnly] public List<Knight> KnightBodyguards { get; protected set; } = new();
         
         [field: Space(10)]
@@ -68,7 +70,7 @@ namespace Damas
         }
 
 
-        private void Update()
+        /*private void Update()
         {
             log.print(
                 $"{gameObject.name}" +
@@ -83,7 +85,7 @@ namespace Damas
             {
                 sRenderer.color = Color.cyan;
             }
-        }
+        }*/
 
         public virtual void OnSpawn(Vector2Int spawnCoords)
         {
@@ -185,15 +187,18 @@ namespace Damas
             transform.position = new Vector2(newPos.x, newPos.y - OffsetY);
             if (BoardManager.Instance.Initialized)
             {
-                OnAfterMove();
+                Update();
             }
         }
 
         /// <summary>
         /// for the bishop and king
         /// </summary>
-        protected virtual void OnAfterMove()
+        protected virtual void Update()
         {
+            log.print(
+                $"{gameObject.name}" +
+                $"| Health: {Health.CurrentValue} Attack: {Attack.CurrentValue}");
         }
 
         public virtual void OnKilledBy(Piece killer)

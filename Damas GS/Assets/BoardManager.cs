@@ -186,6 +186,10 @@ namespace Damas
                 }
 
                 selectedPiece.AttackPiece(clickedPiece);
+                if (selectedPiece is Queen queen)
+                {
+                    queen.LockEnemy(clickedPiece);
+                }
 
                 // // If tile is valid, perform the attack
                 // AttackCommand command = new(selectedPiece, clickedPiece);
@@ -358,6 +362,7 @@ namespace Damas
                 Rook rook = selectedPiece as Rook;
                 rook.RemoveBuffFromAllies();
             }
+            
             currentPlayerColor = currentPlayerColor == PieceColor.White
                 ? PieceColor.Black
                 : PieceColor.White;

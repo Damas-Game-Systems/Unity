@@ -29,11 +29,10 @@ namespace Damas
             return moves;
         }
         
-        protected override void OnAfterMove()
+        protected override void Update()
         {
-            base.OnAfterMove();
-
-            // Remove old buffs
+            base.Update();
+            
             RemoveBuffFromAllies();
 
             ApplyBuffToNearbyAllies();
@@ -48,6 +47,7 @@ namespace Damas
                 foreach (Piece ally in currentlyBuffedAllies)
                 {
                     ally.Attack.ModifyBy(-2);
+                    ally.HasKingBuff = false;
                 }
             }
             currentlyBuffedAllies.Clear();
@@ -75,6 +75,7 @@ namespace Damas
                         if (occupant != null && occupant.color == this.color)
                         {
                             occupant.Attack.ModifyBy(buffAmount);
+                            occupant.HasKingBuff = true;
                             currentlyBuffedAllies.Add(occupant);
                         }
                     }

@@ -20,9 +20,9 @@ namespace Damas
             return moves;
         }
 
-        protected override void OnAfterMove()
+        protected override void Update()
         {
-            base.OnAfterMove();
+            base.Update();
             HealNearbyAllies();
         }
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Damas.Utils;
 using TMPro;
 using UnityEngine;
@@ -17,6 +18,9 @@ namespace Damas.UI
         [SerializeField] private LabeledField pieceColor;
         [SerializeField] private LabeledField health;
         [SerializeField] private LabeledField attack;
+        [SerializeField] private Sprite knightEffect, rookEffect, kingEffect, queenEffect;
+        [SerializeField] private List<Image> effectImages;
+        
 
         public RectTransform RT { get; private set; }
 
@@ -53,6 +57,8 @@ namespace Damas.UI
             pieceColor.Value = Piece.color.ToString();
             health.Value = Piece.Health.CurrentValue.ToString();
             attack.Value = Piece.Attack.CurrentValue.ToString();
+            UpdateEffects(piece);
+            
 
             bkg.enabled = true;
             pieceType.enabled = true;
@@ -72,6 +78,48 @@ namespace Damas.UI
             {
                 timeRemaining -= Time.deltaTime;
             }
+        }
+        
+        public void UpdateEffects(Piece piece)
+        {
+            
+            foreach (Image image in effectImages)
+            {
+                image.enabled = false;
+                image.sprite = null;
+            }
+
+          
+            int index = 0;
+            if (piece.HasKnightBodyguard && index < effectImages.Count)
+            {
+                effectImages[index].sprite = knightEffect;
+                effectImages[index].enabled = true;
+                index++;
+            }
+            
+            if (piece.IsLocked && index < effectImages.Count)
+            {
+                effectImages[index].sprite = queenEffect;
+                effectImages[index].enabled = true;
+                index++;
+            }
+
+            if (piece.HasRookBodyguard && index < effectImages.Count)
+            {
+                effectImages[index].sprite = rookEffect;
+                effectImages[index].enabled = true;
+                index++;
+            }
+
+            if (piece.HasKingBuff && index < effectImages.Count)
+            {
+                effectImages[index].sprite = kingEffect;
+                effectImages[index].enabled = true;
+                index++;
+            }
+
+           
         }
     }
 }

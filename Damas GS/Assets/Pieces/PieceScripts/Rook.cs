@@ -21,9 +21,9 @@ namespace Damas
             ApplyBuffToNearbyAllies();
         }
         
-        protected override void OnAfterMove()
+        protected override void Update()
         {
-            base.OnAfterMove();
+            base.Update();
             // Remove old buffs
             RemoveBuffFromAllies();
             ApplyBuffToNearbyAllies();

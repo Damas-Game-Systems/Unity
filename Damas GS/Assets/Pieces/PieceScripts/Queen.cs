@@ -27,15 +27,26 @@ namespace Damas
             enemy.IsLocked = true;
 
             //unlocking mechanism after 1 turn:
-            BoardManager.Instance.StartCoroutine(UnlockPieceNextTurn(enemy));
+            StartCoroutine(UnlockPieceNextTurn(enemy));
         }
 
         private System.Collections.IEnumerator UnlockPieceNextTurn(Piece enemy)
         {
-            // Wait until the next turn. 
-            yield return new UnityEngine.WaitUntil(() => 
-                BoardManager.Instance.currentPlayerColor == this.color
-            );
+            
+            PieceColor initialPlayerColor = BoardManager.Instance.currentPlayerColor;
+            int turnChanges = 0;
+
+            
+            yield return new UnityEngine.WaitUntil(() =>
+            {
+                if (BoardManager.Instance.currentPlayerColor != initialPlayerColor)
+                {
+                    initialPlayerColor = BoardManager.Instance.currentPlayerColor;
+                    turnChanges++;
+                }
+                return turnChanges >= 2;
+            });
+
            
             if (enemy != null) enemy.IsLocked = false;
         }
