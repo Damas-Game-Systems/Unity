@@ -45,16 +45,10 @@ namespace Damas
             return moves;
         }
 
-        public override void OnCapture(Piece killer)
+        public override void OnKilledBy(Piece killer)
         {
-            if (killer != null)
-            {
-                killer.Health.ReceiveDamage(this.Attack.CurrentValue);
-                
-            }
-            base.OnCapture(killer);
-           
+            base.OnKilledBy(killer);
+            killer.ReceiveDeathRattle(Attack.CurrentValue);
         }
-
     }
 }

@@ -17,10 +17,10 @@ namespace Damas.Combat
             this.receiverHealth = defender.Health;
         }
 
-        public bool WouldKill()
-        {
-            return clientAttack.CurrentValue >= receiverHealth.CurrentValue;
-        }
+        // public bool WouldKill()
+        // {
+        //     return clientAttack.CurrentValue >= receiverHealth.CurrentValue;
+        // }
 
         public void Execute()
         {
@@ -36,7 +36,7 @@ namespace Damas.Combat
 
             if (receiverHealth.CurrentValue <= 0)
             {
-                defender.OnCapture(attacker);
+                defender.OnKilledBy(attacker);
             }
         }
     }

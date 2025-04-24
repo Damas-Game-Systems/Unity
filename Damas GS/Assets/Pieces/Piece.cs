@@ -45,9 +45,6 @@ namespace Damas
 
         public float OffsetY => sRenderer.sprite.bounds.extents.y;
 
-
-        public event System.Action<Piece> BeenCaptured;
-
         private void Awake()
         {
             sRenderer = GetComponent<SpriteRenderer>();
@@ -67,7 +64,12 @@ namespace Damas
 
             if (Health.CurrentValue <= 0)
             {
-                OnCapture(null);
+                sRenderer.color = Color.black;
+            }
+
+            if (IsLocked)
+            {
+                sRenderer.color = Color.cyan;
             }
         }
 
@@ -91,14 +93,54 @@ namespace Damas
             boardX = pos.x; boardY = pos.y;
         }
 
+        public void AttackPiece(Piece target)
+        {
+            if (target.GetAttacked(this))
+            {
+                MoveTo(BoardKey);
+            }
+        }
+
+        public bool GetAttacked(Piece attacker)
+        {
+            int rawDamage = attacker.Attack.CurrentValue;
+            int damageAfterRook =
+                Rook.ApplyRookShieldIfInRange(this, rawDamage);
+            int damageAfterKnight =
+                Knight.ApplyKnightBodyguardIfInRange(this, damageAfterRook);
+
+            Health.ReceiveDamage(damageAfterKnight);
+
+            if (Health.CurrentValue <= 0)
+            {
+                OnKilledBy(attacker);
+                return true;
+            }
+
+            return false;
+        }
+
+        public void ReceiveDeathRattle(int amount)
+        {
+            Health.ReceiveDamage(amount);
+            if (Health.CurrentValue <= 0)
+            {
+                Destroy(gameObject);
+            }
+        }
+
         public void MoveTo(Vector2Int newPos)
         {
             string errorMsg = "";
 
             if (IsRegistered)
             {
-                BoardManager.Instance.DeregisterPiece(this, out errorMsg);
-                
+
+                if (!BoardManager.Instance.DeregisterPiece(this, out errorMsg))
+                {
+                    log.error(errorMsg);
+                    return;
+                }
                 HasMoved = true;
             }
 
@@ -123,12 +165,11 @@ namespace Damas
         /// </summary>
         protected virtual void OnAfterMove()
         {
-            
         }
 
-        public virtual void OnCapture(Piece killer)
+        public virtual void OnKilledBy(Piece killer)
         {
-            BeenCaptured?.Invoke(this);
+            Destroy(gameObject);
         }
 
         public virtual List<Vector2Int> GetValidMoves()
@@ -186,6 +227,11 @@ namespace Damas
         private void OnDisable()
         {
             Unsubscribe();
+        }
+
+        protected virtual void OnDestroy()
+        {
+            BoardManager.Instance.OnPieceDestroyed(this);
         }
     } 
 }

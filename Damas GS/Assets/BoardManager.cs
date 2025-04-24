@@ -12,6 +12,12 @@ namespace Damas
         //Keep track of whose turn it is 
         [SerializeField] public PieceColor currentPlayerColor = PieceColor.White;
 
+        [Header("Scoring")]
+        [SerializeField, ReadOnly] private List<Sprite> whiteCaptures = new();
+        public int whiteScore { get { return whiteCaptures?.Count ?? 0; } }
+        [SerializeField, ReadOnly] private List<Sprite> blackCaptures = new();
+        public int blackScore { get { return blackCaptures?.Count ?? 0; } }
+
         [SerializeField] private int width;
         [SerializeField] private int height;
 
@@ -72,16 +78,22 @@ namespace Damas
                 pieces[key] = piece;
                 return true;
             }
-            else if (pieces[key] != null && pieces[key] != piece)
+            else if (pieces[key] != null
+                    && pieces[key] != piece)
             {
-                error =
-                    $"Couldn't register {piece.name} at {key}." +
-                    $"{pieces[key].name} was already registered here.";
-                return false;
+                if (pieces[key].Health.CurrentValue <= 0)
+                {
+                    DeregisterPiece(pieces[key], out string err);
+                }
+                else
+                {
+                    error =
+                        $"Couldn't register {piece.name} at {key}." +
+                        $"{pieces[key].name} was already registered here.";
+                    return false;
+                }
             }
 
-            // Register the new piece in the pieces dictionary
-            piece.BeenCaptured += HandleCapture;
             pieces[key] = piece;
             return true;
         }
@@ -108,9 +120,31 @@ namespace Damas
             }
 
             // Deregister the new piece from the pieces dictionary
-            piece.BeenCaptured -= HandleCapture;
             pieces[key] = null;
             return true;
+        }
+
+        public void OnPieceDestroyed(Piece piece)
+        {
+            if (!DeregisterPiece(piece, out string error))
+            {
+                log.error(error);
+                return;
+            }
+
+            Sprite sprite = piece.GetComponent<SpriteRenderer>().sprite;
+            if (piece.color == PieceColor.Black)
+            {
+                whiteCaptures.Add(sprite);
+            }
+            else if (piece.color == PieceColor.White)
+            {
+                blackCaptures.Add(sprite);
+            }
+            else
+            {
+                log.error("Piece was neither color");
+            }
         }
 
         public void OnPieceClicked(Piece clickedPiece)
@@ -139,16 +173,6 @@ namespace Damas
             }
             else
             {
-                /// TODO:
-                /// Create an AttackCommand
-                /// - if the command would kill the piece,
-                ///   - issue the command.
-                ///   - capture target to attacker.
-                ///   - move attacker to tile.
-                /// - if not,
-                ///   - issue the command
-                ///
-
                 List<Vector2Int> validMoves = selectedPiece.GetValidMoves();
                 Vector2Int enemyPos = clickedPiece.GetPositionData();
 
@@ -158,19 +182,13 @@ namespace Damas
                     return;
                 }
 
-                // If tile is valid, perform the attack
-                AttackCommand command = new(selectedPiece, clickedPiece);
-                if (command.WouldKill())
-                {
-                    command.Execute();
-                }
-                else
-                {
-                    command.Execute();
-                    SwitchTurn();
-                }
-            }
+                selectedPiece.AttackPiece(clickedPiece);
 
+                // // If tile is valid, perform the attack
+                // AttackCommand command = new(selectedPiece, clickedPiece);
+                // command.Execute();
+                SwitchTurn();
+            }
         }
 
         public void OnTileClicked(Tile tile)
@@ -288,18 +306,6 @@ namespace Damas
             tiles[selectedPiece.BoardKey].ClearOverlay();
             SetOverlaysOnValidMoves(false);
             piece.MoveTo(targetPos);
-        }
-
-        private void DestroyPieceAt(Vector2Int pos)
-        {
-            // If there's a piece at the target square, destroy it
-            Piece occupant = pieces[pos];
-
-            if (occupant != null)
-            {
-                Destroy(occupant.gameObject);
-                pieces[pos] = null;
-            }
         }
 
 
@@ -429,30 +435,5 @@ namespace Damas
         {
             return IsTileEmpty(pos) || IsOpponentPiece(piece, pos);
         }
-
-        private void HandleCapture(Piece piece)
-        {
-            selectedPiece.Captures.Add(piece);
-
-            if (currentPlayerColor == PieceColor.White)
-            {
-                /// TODO:
-                /// Go to White's captured pieces
-                /// For now,
-                DestroyPieceAt(piece.GetPositionData());
-            }
-            else
-            {
-                /// TODO:
-                /// Go to Black's captured pieces
-                /// For now,
-                DestroyPieceAt(piece.GetPositionData());
-            }
-
-            MovePiece(selectedPiece, piece.GetPositionData());
-            SwitchTurn();
-        }
-
-
     }
 }
