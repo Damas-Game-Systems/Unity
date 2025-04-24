@@ -15,14 +15,17 @@ namespace Damas
     {
         [SerializeField] private dbug log = new();
 
+        [field: Space(10)]
         public PieceType type;
         public PieceColor color;
 
+        [field: Space(10)]
         [SerializeField] private int maxHealth;
         [SerializeField] private int defaultAttack;
 
         private SpriteRenderer sRenderer;
 
+        [field: Space(10)]
         public HealthStat Health { get; private set; }
         public AttackStat Attack { get; private set; }
         public List<Piece> Captures { get; private set; } = new();
@@ -36,11 +39,17 @@ namespace Damas
         public int Y => boardY;
         public Vector2Int BoardKey => new(X, Y);
 
+        [field: Space(10)]
         [field: ReadOnly] public bool IsRegistered { get; private set; }
         [field: ReadOnly] public bool HasMoved { get; private set; }
         [field: ReadOnly] public bool IsSelected { get; private set; }
         
+        [field: Space(10)]
         [field: SerializeField] public bool canMovePastPieces { get; protected set; } = false;
+
+        [field: Space(10)]
+        [field: Header("Info Window")]
+        [SerializeField] private float attackWindowPopupDuration;
         [field: ReadOnly] public PieceInfoWindow InfoWindow { get; private set; }
 
         public float OffsetY => sRenderer.sprite.bounds.extents.y;
@@ -117,6 +126,8 @@ namespace Damas
                 return true;
             }
 
+            UiManager.Instance.OpenWindow(this, attackWindowPopupDuration);
+
             return false;
         }
 
@@ -135,7 +146,6 @@ namespace Damas
 
             if (IsRegistered)
             {
-
                 if (!BoardManager.Instance.DeregisterPiece(this, out errorMsg))
                 {
                     log.error(errorMsg);
@@ -182,38 +192,29 @@ namespace Damas
         }
 
         public abstract List<Vector2Int> GetValidMovesInternal();
+
         public void Select()
         {
             IsSelected = true;
 
-            PieceInfoWindowData windowData = new(
-                Camera.main,
-                transform.position + new Vector3(0f, OffsetY * 2, 0f),
-                this
-            );
-
-            UiManager.Instance.PieceInfoUI.RequestOpenWindow(windowData);
+            InfoWindow = UiManager.Instance.OpenWindow(this);
         }
 
         public void Deselect()
         {
             IsSelected = false;
 
-
-            if (InfoWindow != null)
-            {
-                UiManager.Instance.PieceInfoUI.RequestCloseWindow(InfoWindow);
-            }
+            UiManager.Instance.CloseWindow(InfoWindow);
         }
 
         private void Subscribe()
         {
-            UiManager.Instance.PieceInfoUI.WindowOpened += HandlePieceWindowOpened;
+            // to anything in here
         }
 
         private void Unsubscribe()
         {
-            UiManager.Instance.PieceInfoUI.WindowOpened -= HandlePieceWindowOpened;
+            // from anything in here
         }
 
         private void HandlePieceWindowOpened(PieceInfoWindow window)

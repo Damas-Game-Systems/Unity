@@ -1,15 +1,12 @@
 using Damas.Utils;
-using System;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.UI;
 
 namespace Damas.UI
 {
     [RequireComponent(typeof(RectTransform))]
-    public class PieceInfoWindow : Window
+    public class PieceInfoWindow : MonoBehaviour
     {
         [Header("Debugging")]
         [SerializeField] private dbug log = new();
@@ -24,28 +21,22 @@ namespace Damas.UI
         public RectTransform RT { get; private set; }
 
         [field: SerializeField, ReadOnly] public Piece Piece { get; private set; }
+        [field: SerializeField, ReadOnly] public float timeRemaining { get; private set; }
 
         private void Awake()
         {
             RT = GetComponent<RectTransform>();
         }
-        private void OnEnable()
-        {
-            Hide();
-        }
 
-        public override bool Initialize(WindowData baseData)
+        public bool Open(Piece piece, float duration)
         {
-            Hide();
-            if (baseData is not PieceInfoWindowData data)
-            {
-                log.error(
-                    $"Init failed on {name} because it " +
-                    $"was passed the wrong data");
-                return false;
+            bkg.enabled = false;
+            pieceType.enabled = false;
+            pieceColor.Off();
+            health.Off();
+            attack.Off();
 
-            }
-            else if (data.piece == null)
+            if (piece == null)
             {
                 log.error(
                     $"Init failed on {name} because it " +
@@ -54,61 +45,33 @@ namespace Damas.UI
             }
             else
             {
-                this.Piece = data.piece;
-                RT.position = RectTransformUtility.WorldToScreenPoint(data.cam, data.worldSpaceOpenPos);
+                this.Piece = piece;
+                this.timeRemaining = duration;
             }
 
             pieceType.text = Piece.type.ToString();
-            pieceColor.Label = "Team";
-            health.Label = "Health";
-            attack.Label = "Attack Power";
-            return true;
-        }
-
-        private void Update()
-        {
-            if (Piece == null)
-            {
-                log.error($"{name}'s Piece became null.");
-                // Request Close
-                return;
-            }
-
             pieceColor.Value = Piece.color.ToString();
             health.Value = Piece.Health.CurrentValue.ToString();
             attack.Value = Piece.Attack.CurrentValue.ToString();
-        }
 
-        public void Show()
-        {
             bkg.enabled = true;
             pieceType.enabled = true;
             pieceColor.On();
             health.On();
             attack.On();
+            return true;
         }
 
-        public void Hide()
+        private void Update()
         {
-            bkg.enabled = false;
-            pieceType.enabled = false;
-            pieceColor.Off();
-            health.Off();
-            attack.Off();
-        }
-    }
-
-    public class PieceInfoWindowData : WindowData
-    {
-        public readonly Piece piece;
-
-        public PieceInfoWindowData(
-            Camera cam,
-            Vector3 worldSpaceOpenPos,
-            Piece piece)
-                : base (cam, worldSpaceOpenPos)
-        {
-            this.piece = piece;
+            if (timeRemaining > -1 && timeRemaining <= 0)
+            {
+                UiManager.Instance.CloseWindow(this);
+            }
+            else if (timeRemaining > 0)
+            {
+                timeRemaining -= Time.deltaTime;
+            }
         }
     }
 }
