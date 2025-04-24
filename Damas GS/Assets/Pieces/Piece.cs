@@ -111,7 +111,7 @@ namespace Damas
         {
             if (target.GetAttacked(this))
             {
-                MoveTo(BoardKey);
+                MoveTo(target.BoardKey);
             }
         }
 
@@ -185,10 +185,6 @@ namespace Damas
 
             IsRegistered = true;
             transform.position = new Vector2(newPos.x, newPos.y - OffsetY);
-            if (BoardManager.Instance.Initialized)
-            {
-                Update();
-            }
         }
 
         /// <summary>

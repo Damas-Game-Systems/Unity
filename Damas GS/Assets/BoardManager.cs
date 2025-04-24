@@ -127,11 +127,11 @@ namespace Damas
 
         public void OnPieceDestroyed(Piece piece)
         {
-            if (!DeregisterPiece(piece, out string error))
-            {
-                log.error(error);
-                return;
-            }
+            // if (!DeregisterPiece(piece, out string error))
+            // {
+            //     log.error(error);
+            //     return;
+            // }
 
             Sprite sprite = piece.GetComponent<SpriteRenderer>().sprite;
             if (piece.color == PieceColor.Black)
