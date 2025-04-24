@@ -43,6 +43,9 @@ namespace Damas
         [field: ReadOnly] public bool IsRegistered { get; private set; }
         [field: ReadOnly] public bool HasMoved { get; private set; }
         [field: ReadOnly] public bool IsSelected { get; private set; }
+
+        [field: ReadOnly] public bool HasRookBodyguard;
+        [field: ReadOnly] public List<Knight> KnightBodyguards { get; protected set; } = new();
         
         [field: Space(10)]
         [field: SerializeField] public bool canMovePastPieces { get; protected set; } = false;
@@ -113,10 +116,8 @@ namespace Damas
         public bool GetAttacked(Piece attacker)
         {
             int rawDamage = attacker.Attack.CurrentValue;
-            int damageAfterRook =
-                Rook.ApplyRookShieldIfInRange(this, rawDamage);
-            int damageAfterKnight =
-                Knight.ApplyKnightBodyguardIfInRange(this, damageAfterRook);
+            int damageAfterRook = HasRookBodyguard ? rawDamage / 2 : rawDamage;
+            int damageAfterKnight = KnightBodyguards.Count == 0 ? damageAfterRook : DamageWithBodyguard(damageAfterRook);
 
             Health.ReceiveDamage(damageAfterKnight);
 
@@ -129,6 +130,22 @@ namespace Damas
             UiManager.Instance.OpenWindow(this, attackWindowPopupDuration);
 
             return false;
+        }
+
+        protected int DamageWithBodyguard(int damage)
+        {
+
+            int myDamage = damage / 2;
+            int remainder = damage % 2;
+            int myDamageWithRemainder = myDamage + remainder;
+            int knightDamage = myDamage / KnightBodyguards.Count;
+            
+            foreach (Knight knight in KnightBodyguards)
+            {
+                knight.ReceiveDeathRattle(knightDamage);
+            }
+
+            return myDamageWithRemainder;
         }
 
         public void ReceiveDeathRattle(int amount)

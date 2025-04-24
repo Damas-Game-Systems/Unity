@@ -6,6 +6,7 @@ namespace Damas
 {
     public class Rook : Piece
     {
+        private List<Piece> currentlyBuffedAllies = new();
         public override List<Vector2Int> GetValidMovesInternal()
         {
             List<Vector2Int> moves = new();
@@ -15,33 +16,59 @@ namespace Damas
             moves.AddRange(BoardManager.Instance.GetMovesInDirection(this, +1, 0));
             return moves;
         }
-        
-        public static int ApplyRookShieldIfInRange(Piece defender, int incomingDamage)
+        private void Start()
         {
-            int shieldRange = 2;  
-            int shieldValue = 2;  
-
-            // Scan board for any friendly Rook in range
-            //using var here because idk how to reference value pairs in dict
-            //kvp stands for key value pair which is what it should be
-            foreach (var kvp in BoardManager.Instance.pieces)
+            ApplyBuffToNearbyAllies();
+        }
+        
+        protected override void OnAfterMove()
+        {
+            base.OnAfterMove();
+            // Remove old buffs
+            RemoveBuffFromAllies();
+            ApplyBuffToNearbyAllies();
+        }
+        
+        
+        public void RemoveBuffFromAllies()
+        {
+            if (currentlyBuffedAllies != null)
             {
-                var piece = kvp.Value;
-                if (piece == null) continue;
-                if (piece is Rook rook && rook.color == defender.color)
+                foreach (Piece ally in currentlyBuffedAllies)
                 {
-                    
-                    int dist = Mathf.Abs(rook.X - defender.X) + Mathf.Abs(rook.Y - defender.Y);
-                    if (dist <= shieldRange)
+                    ally.HasRookBodyguard = false;
+                }
+            }
+            currentlyBuffedAllies.Clear();
+        }
+
+        
+        public void ApplyBuffToNearbyAllies()
+        {
+            int buffRange = 1;
+
+            for (int dx = -buffRange; dx <= buffRange; dx++)
+            {
+                for (int dy = -buffRange; dy <= buffRange; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+                    int tx = X + dx;
+                    int ty = Y + dy;
+                    Vector2Int pos = new(tx, ty);
+                    if (!BoardManager.Instance.IsInBounds(pos)) continue;
+
+                    if (BoardManager.Instance.TryGetOccupant(
+                            BoardManager.Instance.tiles[pos],
+                            out Piece occupant))
                     {
-                        
-                        int reduced = Mathf.Max(0, incomingDamage - shieldValue);
-                        return reduced;
+                        if (occupant != null && occupant.color == this.color)
+                        {
+                            currentlyBuffedAllies.Add(occupant);
+                            occupant.HasRookBodyguard = true;
+                        }
                     }
                 }
             }
-
-            return incomingDamage;
         }
 
     }

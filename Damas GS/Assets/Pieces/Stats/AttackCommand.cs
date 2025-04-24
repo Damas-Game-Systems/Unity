@@ -28,8 +28,7 @@ namespace Damas.Combat
             int finalDamage = clientAttack.CurrentValue;
             
                 // check if defender gets shielded
-            finalDamage = Rook.ApplyRookShieldIfInRange(defender, finalDamage);
-            finalDamage = Knight.ApplyKnightBodyguardIfInRange(defender, finalDamage);
+            
 
             receiverHealth.ReceiveDamage(finalDamage);
 
