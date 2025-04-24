@@ -1,5 +1,6 @@
 ﻿using Damas.Combat;
 using Damas.Utils;
+using Damas.UI;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -149,7 +150,7 @@ namespace Damas
 
         public void OnPieceClicked(Piece clickedPiece)
         {
-            SetOverlaysOnValidMoves(false);
+            // SetOverlaysOnList(false);
 
             if (selectedPiece == null)
             {
@@ -159,7 +160,7 @@ namespace Damas
                 }
                 else
                 {
-                    DisplayPieceInfo(clickedPiece);
+                    UiManager.Instance.OpenWindow(clickedPiece);
                 }
             }
             else if (clickedPiece == selectedPiece)
@@ -178,7 +179,9 @@ namespace Damas
 
                 if (!validMoves.Contains(enemyPos))
                 {
-                    log.warn("Invalid capture: Enemy is not in range.");
+                    float windowDuration = 1.5f;
+                    UiManager.Instance.OpenWindow(clickedPiece, windowDuration);
+                    log.warn($"Invalid capture: Enemy is not in range. Opening window for {windowDuration}");
                     return;
                 }
 
@@ -202,7 +205,7 @@ namespace Damas
             }
             else if (selectedPiece != null && selectedPiece.GetValidMoves().Contains(tilePos))
             {
-                MovePiece(selectedPiece, tilePos);
+                selectedPiece.MoveTo(tilePos);
                 SwitchTurn();
             }
             else
@@ -210,42 +213,6 @@ namespace Damas
                 /// TODO:
                 /// Indicate that it was an invalid move attempt?
             }
-
-            //if (selectedPiece == null)
-            //{
-            //    if (pieces.TryGetValue(tilePos, out Piece piece))
-            //    {
-            //        if (piece != null)
-            //        {
-            //            OnPieceClicked(piece);
-            //            return;
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    // If the tile is in the valid moves list
-            //    if (validMoves.Contains(tilePos))
-            //    {
-            //        Piece occupant = pieces[tilePos];
-
-            //        if (occupant != null)
-            //        {
-
-            //        }
-            //        else
-            //        {
-
-            //        }
-            //    }
-            //    else
-            //    {
-
-            //    }
-
-            //    //// Clear selection
-            //    //DeselectPiece();
-            //}
         }
 
         public bool TryGetOccupant(Tile tile, out Piece occupant)
@@ -279,10 +246,6 @@ namespace Damas
 
             selectedPiece = piece;
             selectedPiece?.Select();
-
-
-            tiles[selectedPiece.BoardKey].SetOverlaySelected();
-            SetOverlaysOnValidMoves(true);
         }
 
         private void DeselectPiece()
@@ -299,15 +262,6 @@ namespace Damas
         {
             /// TODO
         }
-
-        // Move a piece to (targetX, targetY), capture logic here
-        public void MovePiece(Piece piece, Vector2Int targetPos)
-        {
-            tiles[selectedPiece.BoardKey].ClearOverlay();
-            SetOverlaysOnValidMoves(false);
-            piece.MoveTo(targetPos);
-        }
-
 
         /// <summary>
         /// Moves in a straight line until blocked or off-board.
@@ -355,36 +309,13 @@ namespace Damas
 
             return moves;
         }
-        private void TurnOnHighlights()
-        {
-            // Highlight each tile in validMoves
-            foreach (Vector2Int pos in selectedPiece?.GetValidMoves() ?? new List<Vector2Int>())
-            {
-                if (tiles.TryGetValue(pos, out Tile t))
-                {
-                    t.SetHighlight(true);
-                }
-            }
-        }
-        private void TurnOffHighlights()
-        {
-            // Turn off highlights
-            foreach (Vector2Int pos in selectedPiece?.GetValidMoves() ?? new List<Vector2Int>())
-            {
-                if (tiles.TryGetValue(pos, out Tile t))
-                {
-                    t.SetHighlight(false);
-                }
-            }
-        }
 
-        private void SetOverlaysOnValidMoves(bool turnOn)
+        public void SetOverlaysOnList(List<Vector2Int> positions, bool turnOn)
         {
             log.print(
-                $"Setting overlays to {(turnOn ? "on" : "off")}." +
-                $"Valid moves count: {selectedPiece?.GetValidMoves().Count}");
+                $"Setting overlays to {(turnOn ? "on" : "off")}.");
 
-            foreach (Vector2Int pos in selectedPiece?.GetValidMoves() ?? new List<Vector2Int>())
+            foreach (Vector2Int pos in positions ?? new List<Vector2Int>())
             {
                 if (!tiles.TryGetValue(pos, out Tile tile)) continue;
 
@@ -410,6 +341,7 @@ namespace Damas
 
         private void SwitchTurn()
         {
+            UiManager.Instance.CloseAllWindows();
             DeselectPiece();
             if (selectedPiece is King)
             {

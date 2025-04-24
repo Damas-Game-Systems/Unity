@@ -36,7 +36,6 @@ namespace Damas
             // Remove old buffs
             RemoveBuffFromAllies();
 
-          
             ApplyBuffToNearbyAllies();
         }
 
@@ -48,7 +47,6 @@ namespace Damas
             {
                 foreach (Piece ally in currentlyBuffedAllies)
                 {
-                   
                     ally.Attack.ModifyBy(-2);
                 }
             }
@@ -83,6 +81,5 @@ namespace Damas
                 }
             }
         }
-
     }
 }
