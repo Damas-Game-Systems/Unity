@@ -48,7 +48,7 @@ namespace Damas
         [field: ReadOnly] public bool HasKnightBodyguard => KnightBodyguards.Count > 0;
         [field: ReadOnly] public bool HasKingBuff;
         [field: ReadOnly] public List<Knight> KnightBodyguards { get; protected set; } = new();
-        
+
         [field: Space(10)]
         [field: SerializeField] public bool canMovePastPieces { get; protected set; } = false;
 
@@ -57,7 +57,7 @@ namespace Damas
         [SerializeField] private float attackWindowPopupDuration;
         [field: ReadOnly] public PieceInfoWindow InfoWindow { get; private set; }
 
-        public float OffsetY => sRenderer.sprite.bounds.extents.y;
+        public float OffsetY => sRenderer.sprite.bounds.extents.y - (sRenderer.sprite.pivot.y / sRenderer.sprite.pixelsPerUnit);
 
         private void Awake()
         {

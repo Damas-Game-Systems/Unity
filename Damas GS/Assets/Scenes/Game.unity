@@ -122,6 +122,90 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &257325523
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 257325525}
+  - component: {fileID: 257325524}
+  m_Layer: 0
+  m_Name: Board Border
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!212 &257325524
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 257325523}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 21300000, guid: 7bfe758dc3ed33249938bb8f35c542ab, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 12.8, y: 12.8}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!4 &257325525
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 257325523}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.45, y: 3.55, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &699644579
 GameObject:
   m_ObjectHideFlags: 0
@@ -155,19 +239,21 @@ MonoBehaviour:
   dontDestroyOnLoad: 0
   columns: 8
   rows: 8
-  tilePrefab: {fileID: 8701496222182921568, guid: 5516e65706ca30e479306a5c08d21a83, type: 3}
+  tilePrefab: {fileID: 481918979329986095, guid: a0a502c2a82bdfc45b19634fbaf59d01, type: 3}
   lightColor: {r: 0.3962264, g: 0.3962264, b: 0.3962264, a: 1}
+  lightSprite: {fileID: -1344079168, guid: 5468b2934e1832f4b9eafb4e382b9eb0, type: 3}
   darkColor: {r: 0.10898005, g: 0.2924528, b: 0.24091554, a: 1}
+  darkSprite: {fileID: -933703950, guid: 3b95ee0a12cddae4595e28b2a02acafd, type: 3}
   whitePawnPrefab: {fileID: 4440166648968000157, guid: 0c869d99b8198c3469dabaa12453fd2a, type: 3}
-  whiteRookPrefab: {fileID: 7543113456995801209, guid: efb2fb9ee205a67468a65059cbbdc488, type: 3}
+  whiteRookPrefab: {fileID: 7543113456995801209, guid: ca5544e139ab3174daec0bb56fe915e4, type: 3}
   whiteKnightPrefab: {fileID: 72840549797589148, guid: 1fb09158a5cdfb746acd462fb348c07a, type: 3}
-  whiteBishopPrefab: {fileID: 6422222606439458086, guid: ca5544e139ab3174daec0bb56fe915e4, type: 3}
+  whiteBishopPrefab: {fileID: 6422222606439458086, guid: efb2fb9ee205a67468a65059cbbdc488, type: 3}
   whiteQueenPrefab: {fileID: 1004514267530307606, guid: 44d70e5f4b44b704a9e8bd6cc301c982, type: 3}
   whiteKingPrefab: {fileID: 7952402192789018693, guid: 19c20c53713d7e04285c0143ced74935, type: 3}
   blackPawnPrefab: {fileID: 801680108539058500, guid: 00a5aa47ada5f8c4fbf67b1d0091622d, type: 3}
-  blackRookPrefab: {fileID: 4865255115910454226, guid: 8f16c93d84f619540a94cc2b78a92b2e, type: 3}
+  blackRookPrefab: {fileID: 4865255115910454226, guid: 781382496970d1e4caf829785874aaa1, type: 3}
   blackKnightPrefab: {fileID: 4527818454402372619, guid: a29d9e979de5a724f98ad5384ec018c4, type: 3}
-  blackBishopPrefab: {fileID: 6446129275631970701, guid: 781382496970d1e4caf829785874aaa1, type: 3}
+  blackBishopPrefab: {fileID: 6446129275631970701, guid: 8f16c93d84f619540a94cc2b78a92b2e, type: 3}
   blackQueenPrefab: {fileID: 8503511771402253824, guid: 010eaa19ff9ebb74ea8edb1c3fb7a015, type: 3}
   blackKingPrefab: {fileID: 4007910624560564020, guid: 03f5896069fb1d54a953b2c9b39b6fa2, type: 3}
 --- !u!4 &699644581
@@ -387,7 +473,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 7
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -412,7 +498,7 @@ Transform:
   m_GameObject: {fileID: 1137270684}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4, y: 4, z: -10}
+  m_LocalPosition: {x: 3.45, y: 3.55, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -459,6 +545,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1137270687}
+  - {fileID: 257325525}
   - {fileID: 699644581}
   - {fileID: 926419767}
   - {fileID: 1091077934}
