@@ -7,12 +7,6 @@ namespace Damas
     [RequireComponent(typeof(SpriteRenderer))]
     public class Tile : MonoBehaviour, IPointerDownHandler
     {
-        // Colors 
-        public Color lightColor = Color.white;
-        public Color darkColor = Color.gray;
-        public Color defaultColor = Color.white;
-        public Color highlightColor = Color.green;  // highlight
-
         [SerializeField] private GameObject emptyTileOverlayPrefab;
         [SerializeField] private GameObject occupiedTileOverlayPrefab;
         [SerializeField] private GameObject selectedTileOverlayPrefab;
@@ -32,9 +26,10 @@ namespace Damas
             rend = GetComponent<SpriteRenderer>();
         }
 
-        public void OnSpawn(Vector2Int spawnPos)
+        public void OnSpawn(Vector2Int spawnPos, Sprite sprite)
         {
             SetPositionData(spawnPos);
+            rend.sprite = sprite;
         }
 
         public Vector2Int GetPositionData()
@@ -46,12 +41,6 @@ namespace Damas
         {
             boardX = pos.x;
             boardY = pos.y;
-        }
-
-        // Sets the tile’s color
-        public void SetHighlight(bool highlight)
-        {
-            rend.color = highlight ? highlightColor : defaultColor;
         }
 
         // This replaces OnMouseDown()

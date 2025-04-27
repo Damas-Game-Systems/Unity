@@ -13,7 +13,9 @@ namespace Damas
         [Header("Tile Settings")]
         public GameObject tilePrefab;
         public Color lightColor = Color.white;
+        public Sprite lightSprite;
         public Color darkColor = Color.gray;
+        public Sprite darkSprite;
 
         [Header("White Piece Prefabs")]
         public GameObject whitePawnPrefab;
@@ -70,10 +72,9 @@ namespace Damas
 
                     // Alternate color
                     bool isDark = (x + y) % 2 == 1;
-                    tile.defaultColor = isDark ? darkColor : lightColor;
-                    tile.GetComponent<SpriteRenderer>().color = tile.defaultColor;
+                    Sprite sprite = isDark ? darkSprite : lightSprite;
 
-                    tile.OnSpawn(boardPos);
+                    tile.OnSpawn(boardPos, sprite);
 
                     // Add tile to dictionary
                     Debug.Log($"Adding tile {boardPos} to dictionary");
